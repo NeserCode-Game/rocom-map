@@ -24,6 +24,12 @@
       "allow": [
         {
           "url": "https://*.tauri.app"
+        },
+        {
+          "url": "https://terra-api.17173.com/**"
+        },
+        {
+          "url": "https://ue.17173cdn.com/**"
         }
       ],
       "deny": [

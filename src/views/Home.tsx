@@ -1,11 +1,9 @@
-import { useI18n } from "@/composables";
+import MapContainer from '../components/map/MapContainer';
 
 export default function Home() {
-  const { t } = useI18n();
-
   return (
     <div className="view-home">
-      <h1 className="title">{t("Home.title")}</h1>
+      <MapContainer />
     </div>
   );
 }
