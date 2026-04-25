@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import {
   ChevronDown,
   Package,
@@ -8,12 +9,23 @@ import {
   MapPin,
   ScrollText,
   HelpCircle,
+  Filter,
+  Search,
+  Check,
   X,
 } from "lucide-react";
 import { useMapStore } from "../../composables/useMapStore";
 import { getCategoryIconUrl, CATEGORY_NAMES } from "../../lib/map/constants";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ConfigPanel } from "./ConfigPanel";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 // 8 分组的 lucide 图标映射
 const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -32,6 +44,10 @@ export default function CategoryFilter() {
   const visibleCategories = useMapStore((s) => s.visibleCategories);
   const toggleCategory = useMapStore((s) => s.toggleCategory);
   const toggleGroup = useMapStore((s) => s.toggleGroup);
+
+  // 过滤 Popover 状态
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   if (groups.length === 0) return null;
 
@@ -53,6 +69,46 @@ export default function CategoryFilter() {
     return checked > 0 && checked < g.subCategories.length;
   }
 
+  // 全选 / 全不选 / 反选
+  function handleSelectAll() {
+    const all = [...allCids];
+    useMapStore.setState({ visibleCategories: new Set(all) });
+  }
+
+  function handleDeselectAll() {
+    useMapStore.setState({ visibleCategories: new Set() });
+  }
+
+  function handleInvert() {
+    const next = new Set<number>();
+    for (const cid of allCids) {
+      if (!visibleCategories.has(cid)) next.add(cid);
+    }
+    useMapStore.setState({ visibleCategories: next });
+  }
+
+  // 搜索过滤后的子分类
+  const filteredSubCategories = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+    const query = searchQuery.toLowerCase();
+    const result: Array<{ groupId: string; groupLabel: string; categoryId: number; name: string; count: number }> = [];
+    for (const group of groups) {
+      for (const sc of group.subCategories) {
+        const name = CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString();
+        if (name.toLowerCase().includes(query)) {
+          result.push({
+            groupId: group.key,
+            groupLabel: group.label,
+            categoryId: sc.categoryId,
+            name,
+            count: sc.count,
+          });
+        }
+      }
+    }
+    return result;
+  }, [groups, searchQuery]);
+
   return (
     <div className="category-panel">
       {/* 标题 */}
@@ -63,17 +119,116 @@ export default function CategoryFilter() {
         </span>
       </div>
 
-      {/* 清空按钮 */}
-      <div className="px-3 py-2 border-b shrink-0">
-        <button
-          onClick={() => toggleGroup("__all__")}
-          disabled={visibleCount === 0}
-          title="清空已选"
-          className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded border border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-foreground/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <X className="w-3 h-3" />
-          清空已选
-        </button>
+      {/* 过滤按钮 + 设置 */}
+      <div className="px-3 py-2 border-b shrink-0 flex items-center gap-2">
+        <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 px-2"
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span className="text-xs">过滤</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            sideOffset={8}
+            className="w-72"
+          >
+            {/* 搜索框 */}
+            <div className="flex items-center gap-2 mb-2">
+              <Search className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="搜索分类名称..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 h-7 px-2 text-xs rounded border border-input bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+
+            <Separator className="my-2" />
+
+            {/* 快捷操作 */}
+            <div className="flex gap-2 mb-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSelectAll}
+                className="flex-1 h-7 gap-1"
+              >
+                <Check className="w-3.5 h-3.5" />
+                全选
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDeselectAll}
+                className="flex-1 h-7 gap-1"
+              >
+                <X className="w-3.5 h-3.5" />
+                全不选
+              </Button>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleInvert}
+              className="w-full h-7 mb-2"
+            >
+              反选
+            </Button>
+
+            <Separator className="my-2" />
+
+            {/* 搜索结果 */}
+            {filteredSubCategories ? (
+              <div className="max-h-48 overflow-y-auto">
+                {filteredSubCategories.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    无匹配结果
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredSubCategories.map((sc) => {
+                      const checked = visibleCategories.has(sc.categoryId);
+                      return (
+                        <button
+                          key={sc.categoryId}
+                          onClick={() => toggleCategory(sc.categoryId)}
+                          className={`
+                            inline-flex items-center gap-1.5 h-6 px-2 rounded-full
+                            text-xs font-medium transition-colors select-none
+                            ${checked
+                              ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                              : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                            }
+                          `}
+                          title={`${sc.groupLabel} - ${sc.name}`}
+                        >
+                          <img
+                            src={getCategoryIconUrl(sc.categoryId)}
+                            alt=""
+                            className="w-3 h-3 shrink-0 object-contain"
+                          />
+                          <span className="truncate max-w-[60px]">{sc.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                输入关键词搜索分类
+              </p>
+            )}
+          </PopoverContent>
+        </Popover>
+        <ConfigPanel />
       </div>
 
       {/* 分组列表：默认全部展开 */}

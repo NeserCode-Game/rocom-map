@@ -1,3 +1,30 @@
+/* ─── 配置面板 Popover ─── */
+.config-popover-content {
+  @apply w-72 gap-0;
+}
+
+.config-section {
+  @apply flex flex-col gap-1.5;
+}
+
+.config-label {
+  @apply text-xs font-medium text-muted-foreground;
+}
+
+.config-input {
+  @apply flex-1 h-8 px-3 rounded-md border border-input bg-transparent text-sm
+    outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50
+    placeholder:text-muted-foreground;
+}
+
+.config-actions {
+  @apply flex flex-col gap-1.5;
+}
+
+.config-action-btn {
+  @apply justify-start gap-2;
+}
+
 /* ─── 地图组件样式 ─── */
 
 /* 主视图：左右分栏布局 */

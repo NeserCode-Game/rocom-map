@@ -1,8 +1,9 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Marker, Popup, useMap } from 'react-leaflet';
+import { useMemo } from 'react';
+import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useMapStore } from '../../composables/useMapStore';
 import { getCategoryIconUrl, CATEGORY_NAMES } from '../../lib/map/constants';
+import { logger } from '../../lib/logger';
 import type { MapLocation } from '../../lib/map/types';
 
 /* icon 缓存：同一 categoryId 只创建一个 L.Icon 实例 */
@@ -21,26 +22,6 @@ function getIcon(categoryId: number): L.Icon {
     iconCache.set(categoryId, icon);
   }
   return icon;
-}
-
-/** 视野过滤：只渲染当前视口内的标点 */
-function useViewportFilter(locations: MapLocation[]): MapLocation[] {
-  const map = useMap();
-  const [bounds, setBounds] = useState(map.getBounds());
-
-  useEffect(() => {
-    const onMoveEnd = () => setBounds(map.getBounds());
-    map.on('moveend', onMoveEnd);
-    return () => { map.off('moveend', onMoveEnd); };
-  }, [map]);
-
-  return useMemo(() => {
-    if (locations.length === 0) return [];
-    return locations.filter((loc) => {
-      const latlng: L.LatLngExpression = [loc.latitude, loc.longitude];
-      return bounds.contains(latlng);
-    });
-  }, [locations, bounds]);
 }
 
 /** 单个标点组件 */
@@ -68,17 +49,25 @@ function LocationMarker({ loc }: { loc: MapLocation }) {
 export default function MapMarkers() {
   const locations = useMapStore((s) => s.locations);
   const visibleCategories = useMapStore((s) => s.visibleCategories);
-  const visible = useViewportFilter(locations);
 
   // 按分类过滤
   const filtered = useMemo(
-    () => visible.filter((loc) => visibleCategories.has(loc.category_id)),
-    [visible, visibleCategories],
+    () => locations.filter((loc) => visibleCategories.has(loc.category_id)),
+    [locations, visibleCategories],
   );
 
   // 限制同时渲染数量，避免卡顿
   const MAX_RENDER = 500;
   const toRender = filtered.slice(0, MAX_RENDER);
+
+  logger.info("MapMarkers", "render", "filter", {
+    totalLocations: locations.length,
+    visibleCategories: visibleCategories.size,
+    filteredCount: filtered.length,
+    maxRender: MAX_RENDER,
+    renderedCount: toRender.length,
+    truncated: filtered.length > MAX_RENDER,
+  });
 
   return (
     <>

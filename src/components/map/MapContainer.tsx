@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { MAP_CONFIG, GAME_BOUNDS } from "../../lib/map/constants";
 import { fetchLocations } from "../../lib/map/api";
 import { useMapStore } from "../../composables/useMapStore";
+import { logger } from "../../lib/logger";
 import GameTileLayer from "./GameTileLayer";
 import MapMarkers from "./MapMarkers";
 
@@ -15,18 +16,19 @@ function DataLoader() {
     let cancelled = false;
     (async () => {
       useMapStore.setState({ loading: true, error: null });
+      logger.info("MapContainer", "DataLoader", "fetch", { started: true });
       try {
         const locs = await fetchLocations();
         if (!cancelled) {
           setLocations(locs);
           useMapStore.setState({ loading: false });
+          logger.info("MapContainer", "DataLoader", "fetch", { count: locs.length, success: true });
         }
       } catch (err) {
         if (!cancelled) {
-          useMapStore.setState({
-            loading: false,
-            error: err instanceof Error ? err.message : String(err),
-          });
+          const msg = err instanceof Error ? err.message : String(err);
+          useMapStore.setState({ loading: false, error: msg });
+          logger.error("MapContainer", "DataLoader", "fetch", { error: msg });
         }
       }
     })();
