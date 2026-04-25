@@ -1,64 +1,99 @@
 import { create } from 'zustand';
-import type { MapLocation, CategoryInfo } from '../lib/map/types';
-import { getCategoryIconUrl } from '../lib/map/constants';
+import type { MapLocation, MarkerGroup } from '../lib/map/types';
+import { MARKER_GROUPS } from '../lib/map/constants';
 
 interface MapState {
   locations: MapLocation[];
-  categories: CategoryInfo[];
+  groups: MarkerGroup[];
   visibleCategories: Set<number>;
   loading: boolean;
   error: string | null;
 
-  /* actions */
   setLocations: (locs: MapLocation[]) => void;
-  toggleCategory: (id: number) => void;
-  showAllCategories: () => void;
-  hideAllCategories: () => void;
-  isCategoryVisible: (id: number) => boolean;
+  toggleCategory: (categoryId: number) => void;
+  toggleGroup: (key: string) => void;
+  showAllGroups: () => void;
+  hideAllGroups: () => void;
+  isGroupVisible: (key: string) => boolean;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
   locations: [],
-  categories: [],
+  groups: [],
   visibleCategories: new Set(),
   loading: false,
   error: null,
 
   setLocations: (locs) => {
-    // 从数据中动态提取分类列表
-    const catMap = new Map<number, number>();
+    const catCountMap = new Map<number, number>();
     for (const loc of locs) {
-      catMap.set(loc.category_id, (catMap.get(loc.category_id) ?? 0) + 1);
+      catCountMap.set(loc.category_id, (catCountMap.get(loc.category_id) ?? 0) + 1);
     }
-    const categories: CategoryInfo[] = Array.from(catMap.entries())
-      .map(([categoryId, count]) => ({
-        categoryId,
-        count,
-        iconUrl: getCategoryIconUrl(categoryId),
-      }))
-      .sort((a, b) => a.categoryId - b.categoryId);
 
-    set({ locations: locs, categories });
+    const groups: MarkerGroup[] = MARKER_GROUPS.map((def) => {
+      const subCategories = def.categoryIds
+        .filter((cid) => (catCountMap.get(cid) ?? 0) > 0)
+        .map((cid) => ({
+          categoryId: cid,
+          name: cid.toString(),
+          count: catCountMap.get(cid) ?? 0,
+        }));
+
+      return {
+        ...def,
+        count: subCategories.reduce((sum, sc) => sum + sc.count, 0),
+        subCategories,
+      };
+    }).filter((g) => g.count > 0);
+
+    const allCids = new Set<number>();
+    for (const g of groups) {
+      for (const sc of g.subCategories) allCids.add(sc.categoryId);
+    }
+
+    set({ locations: locs, groups, visibleCategories: allCids });
   },
 
-  toggleCategory: (id) => {
+  toggleCategory: (categoryId) => {
     const next = new Set(get().visibleCategories);
-    if (next.has(id)) {
-      next.delete(id);
+    if (next.has(categoryId)) next.delete(categoryId);
+    else next.add(categoryId);
+    set({ visibleCategories: next });
+  },
+
+  toggleGroup: (key) => {
+    const groups = get().groups;
+    const visible = get().visibleCategories;
+    const group = groups.find((g) => g.key === key);
+    if (!group) return;
+
+    const groupCids = group.subCategories.map((sc) => sc.categoryId);
+    const allVisible = groupCids.every((cid) => visible.has(cid));
+
+    const next = new Set(visible);
+    if (allVisible) {
+      for (const cid of groupCids) next.delete(cid);
     } else {
-      next.add(id);
+      for (const cid of groupCids) next.add(cid);
     }
     set({ visibleCategories: next });
   },
 
-  showAllCategories: () => {
-    const ids = get().categories.map((c) => c.categoryId);
-    set({ visibleCategories: new Set(ids) });
+  showAllGroups: () => {
+    const allCids = new Set<number>();
+    for (const g of get().groups) {
+      for (const sc of g.subCategories) allCids.add(sc.categoryId);
+    }
+    set({ visibleCategories: allCids });
   },
 
-  hideAllCategories: () => {
+  hideAllGroups: () => {
     set({ visibleCategories: new Set() });
   },
 
-  isCategoryVisible: (id) => get().visibleCategories.has(id),
+  isGroupVisible: (key) => {
+    const group = get().groups.find((g) => g.key === key);
+    if (!group) return false;
+    return group.subCategories.some((sc) => get().visibleCategories.has(sc.categoryId));
+  },
 }));

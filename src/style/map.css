@@ -1,0 +1,50 @@
+/* ─── 地图组件样式 ─── */
+
+/* 地图卡片：正方形 + 无 padding（让地图完全填满） */
+.map-card {
+  width: 60vh;
+  height: 60vh;
+  @apply p-0;
+}
+
+/* Leaflet 地图容器：通过 CSS 变量接收 JS 动态尺寸 */
+.map-container {
+  @apply w-full h-full relative;
+}
+
+.map-leaflet {
+  width: var(--map-width, 600px);
+  height: var(--map-height, 600px);
+}
+
+/* 加载状态指示器 */
+.map-loading-indicator {
+  @apply absolute bottom-2.5 left-2.5 z-[1000]
+    bg-white/90 dark:bg-neutral-800/90
+    px-3 py-1.5 rounded-md text-[13px]
+    shadow-[0_1px_4px_rgba(0,0,0,0.1)];
+}
+
+/* 分类筛选面板滚动区 */
+.category-scroll-area {
+  @apply overflow-y-auto;
+  max-height: calc(100vh - 160px);
+}
+
+/* 分类图标像素渲染 */
+.category-icon {
+  image-rendering: crisp-edges;
+}
+
+/* Popup 内容 */
+.popup-content {
+  @apply min-w-[120px];
+}
+
+.popup-category {
+  @apply mt-1 text-xs opacity-70;
+}
+
+.popup-description {
+  @apply mt-0.5 text-xs opacity-60;
+}

@@ -1,20 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-import { MapContainer as LeafletMapContainer } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useRef, useState } from "react";
+import { MapContainer as LeafletMapContainer } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
-import { MAP_CONFIG, MAX_BOUNDS } from '../../lib/map/constants';
-import { fetchLocations } from '../../lib/map/api';
-import { useMapStore } from '../../composables/useMapStore';
-import GameTileLayer from './GameTileLayer';
-import MapMarkers from './MapMarkers';
-import CategoryFilter from './CategoryFilter';
+import { MAP_CONFIG, GAME_BOUNDS } from "../../lib/map/constants";
+import { fetchLocations } from "../../lib/map/api";
+import { useMapStore } from "../../composables/useMapStore";
+import GameTileLayer from "./GameTileLayer";
+import MapMarkers from "./MapMarkers";
 
 /** 数据加载器 */
 function DataLoader() {
   const setLocations = useMapStore((s) => s.setLocations);
-  useMapStore((s) => s.loading);
-  useMapStore((s) => s.error);
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -34,7 +30,9 @@ function DataLoader() {
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [setLocations]);
 
   return null;
@@ -47,18 +45,8 @@ function LoadingIndicator() {
   if (!loading && !error) return null;
 
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: 10,
-      left: 10,
-      zIndex: 1000,
-      background: 'rgba(255,255,255,0.9)',
-      padding: '6px 12px',
-      borderRadius: 6,
-      fontSize: 13,
-      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-    }}>
-      {loading ? '⏳ 加载标点数据...' : `❌ ${error}`}
+    <div className="map-loading-indicator">
+      {loading ? "⏳ 加载标点数据..." : `❌ ${error}`}
     </div>
   );
 }
@@ -66,7 +54,7 @@ function LoadingIndicator() {
 /** 主地图容器 */
 export default function MapContainer() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
 
   // 用 ResizeObserver 获取容器实际尺寸
   useEffect(() => {
@@ -85,23 +73,25 @@ export default function MapContainer() {
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
+      className="map-container"
+      style={
+        {
+          "--map-width": `${dimensions.width}px`,
+          "--map-height": `${dimensions.height}px`,
+        } as React.CSSProperties
+      }
     >
       <LeafletMapContainer
-        center={MAP_CONFIG.center}
-        zoom={MAP_CONFIG.zoom.initial}
+        bounds={GAME_BOUNDS}
         minZoom={MAP_CONFIG.zoom.min}
         maxZoom={MAP_CONFIG.zoom.max}
-        maxBounds={MAX_BOUNDS}
-        maxBoundsViscosity={1.0}
-        style={{ width: dimensions.width, height: dimensions.height }}
+        className="map-leaflet"
         zoomControl={true}
       >
         <GameTileLayer />
         <MapMarkers />
         <DataLoader />
       </LeafletMapContainer>
-      <CategoryFilter />
       <LoadingIndicator />
     </div>
   );
