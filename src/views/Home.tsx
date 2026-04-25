@@ -1,16 +1,13 @@
-import MapContainer from '../components/map/MapContainer';
-import CategoryFilter from '../components/map/CategoryFilter';
-import { Card, CardContent } from '@/components/ui/card';
+﻿import MapContainer from "../components/map/MapContainer";
+import CategoryFilter from "../components/map/CategoryFilter";
 
 export default function Home() {
   return (
-    <div className="view-home flex items-center justify-center gap-3 p-4">
-      <Card className="map-card">
-        <CardContent className="p-0 w-full h-full relative">
-          <MapContainer />
-        </CardContent>
-      </Card>
-      <CategoryFilter />
+    <div className="view-home flex h-full">
+      <div className="main-container">
+        <CategoryFilter />
+        <MapContainer />
+      </div>
     </div>
   );
 }

@@ -26,10 +26,16 @@ button {
 }
 
 .view-home {
-  @apply w-full h-full relative;
+  @apply w-full h-full relative p-6;
 
   .title {
     @apply w-fit h-full text-2xl font-semibold;
+  }
+
+  .main-container {
+    @apply mx-auto flex justify-center w-fit h-fit rounded overflow-hidden
+    border border-neutral-300 dark:border-neutral-600
+    transition-colors ease-in-out duration-100;
   }
 }
 

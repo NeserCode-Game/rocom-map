@@ -1,30 +1,43 @@
-import { useState } from 'react';
-import { useMapStore } from '../../composables/useMapStore';
-import { getCategoryIconUrl, CATEGORY_NAMES } from '../../lib/map/constants';
 import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+  ChevronDown,
+  Package,
+  Flower2,
+  Apple,
+  Gem,
+  Sparkles,
+  MapPin,
+  ScrollText,
+  HelpCircle,
+  X,
+} from "lucide-react";
+import { useMapStore } from "../../composables/useMapStore";
+import { getCategoryIconUrl, CATEGORY_NAMES } from "../../lib/map/constants";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+
+// 8 分组的 lucide 图标映射
+const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  collect: Package,
+  grass: Flower2,
+  fruit: Apple,
+  ore: Gem,
+  sprite: Sparkles,
+  location: MapPin,
+  quest: ScrollText,
+  other: HelpCircle,
+};
 
 export default function CategoryFilter() {
   const groups = useMapStore((s) => s.groups);
   const visibleCategories = useMapStore((s) => s.visibleCategories);
   const toggleCategory = useMapStore((s) => s.toggleCategory);
   const toggleGroup = useMapStore((s) => s.toggleGroup);
-  const showAll = useMapStore((s) => s.showAllGroups);
-  const hideAll = useMapStore((s) => s.hideAllGroups);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [open, setOpen] = useState(false);
 
   if (groups.length === 0) return null;
 
-  const allCids = new Set(groups.flatMap((g) => g.subCategories.map((sc) => sc.categoryId)));
+  const allCids = new Set(
+    groups.flatMap((g) => g.subCategories.map((sc) => sc.categoryId)),
+  );
   const visibleCount = [...visibleCategories].filter((c) => allCids.has(c)).length;
 
   function isGroupAllChecked(key: string): boolean {
@@ -40,118 +53,119 @@ export default function CategoryFilter() {
     return checked > 0 && checked < g.subCategories.length;
   }
 
-  function toggleExpand(key: string) {
-    const next = new Set(expandedGroups);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    setExpandedGroups(next);
-  }
-
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="shrink-0">
-          <Filter className="size-4" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-80 overflow-y-auto p-0">
-        <SheetHeader className="px-4 pt-4 pb-2 border-b">
-          <SheetTitle>分类筛选</SheetTitle>
-          <SheetDescription>
-            {visibleCount}/{allCids.size} 个分类可见
-          </SheetDescription>
-        </SheetHeader>
+    <div className="category-panel">
+      {/* 标题 */}
+      <div className="category-panel-header">
+        <h2 className="font-semibold text-sm">分类筛选</h2>
+        <span className="text-xs text-muted-foreground">
+          {visibleCount}/{allCids.size}
+        </span>
+      </div>
 
-        {/* 快捷操作 */}
-        <div className="flex gap-2 px-4 py-2 border-b">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={showAll}
-            disabled={visibleCount === allCids.size}
-          >
-            全选
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={hideAll}
-            disabled={visibleCount === 0}
-          >
-            全不选
-          </Button>
-        </div>
+      {/* 清空按钮 */}
+      <div className="px-3 py-2 border-b shrink-0">
+        <button
+          onClick={() => toggleGroup("__all__")}
+          disabled={visibleCount === 0}
+          title="清空已选"
+          className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded border border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-foreground/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <X className="w-3 h-3" />
+          清空已选
+        </button>
+      </div>
 
-        {/* 分组列表 */}
-        <div className="category-scroll-area">
+      {/* 分组列表：默认全部展开 */}
+      <ScrollArea className="category-scroll-area">
+        <div className="category-scroll-inner">
           {groups.map((group) => {
-            const expanded = expandedGroups.has(group.key);
             const allChecked = isGroupAllChecked(group.key);
             const partialChecked = isGroupPartialChecked(group.key);
+            const IconComponent = GROUP_ICONS[group.key];
 
             return (
-              <div key={group.key} className="border-b last:border-b-0">
+              <Collapsible
+                key={group.key}
+                className="border-b last:border-b-0"
+                defaultOpen={true}
+              >
                 {/* 分组行 */}
-                <div
-                  className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-muted/50 select-none"
-                  onClick={() => toggleExpand(group.key)}
+                <CollapsibleTrigger
+                  className="
+                    flex items-center gap-2 px-3 py-2.5 w-full
+                    cursor-pointer hover:bg-muted/50 select-none
+                    data-[state=open]:bg-muted/30
+                  "
                 >
                   <input
                     type="checkbox"
                     checked={allChecked}
-                    ref={(el) => { if (el) el.indeterminate = partialChecked; }}
-                    onChange={(e) => { e.stopPropagation(); toggleGroup(group.key); }}
+                    ref={(el) => {
+                      if (el) el.indeterminate = partialChecked;
+                    }}
+                    onChange={() => toggleGroup(group.key)}
                     onClick={(e) => e.stopPropagation()}
                     className="shrink-0"
                   />
-                  <span className="flex-1 font-medium text-sm truncate">
+                  {IconComponent && (
+                    <IconComponent className="w-4 h-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className="flex-1 font-medium text-sm text-left truncate">
                     {group.label}
                   </span>
                   <span className="text-muted-foreground text-xs tabular-nums shrink-0">
                     {group.count}
                   </span>
-                  <span className="text-muted-foreground/60 text-[10px] shrink-0">
-                    {expanded ? '▼' : '▶'}
-                  </span>
-                </div>
+                  <ChevronDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground/60 transition-transform data-[state=open]:rotate-180" />
+                </CollapsibleTrigger>
 
-                {/* 子分类列表 */}
-                {expanded && (
-                  <div className="bg-muted/30 pb-1">
-                    {group.subCategories.map((sc) => (
-                      <label
-                        key={sc.categoryId}
-                        className="flex items-center gap-2 px-4 py-1.5 cursor-pointer hover:bg-muted/60"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={visibleCategories.has(sc.categoryId)}
-                          onChange={() => toggleCategory(sc.categoryId)}
-                          className="shrink-0"
-                        />
-                        <img
-                          src={getCategoryIconUrl(sc.categoryId)}
-                          alt={sc.name}
-                          className="w-4 h-4 shrink-0 object-contain category-icon"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                        <span className="flex-1 text-xs text-muted-foreground truncate">
-                          {CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString()}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground/60 tabular-nums shrink-0">
-                          {sc.count}
-                        </span>
-                      </label>
-                    ))}
+                {/* 子分类列表：inline 按钮行 */}
+                <CollapsibleContent>
+                  <div className="pb-2 pt-1 px-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.subCategories.map((sc) => {
+                        const checked = visibleCategories.has(sc.categoryId);
+                        return (
+                          <button
+                            key={sc.categoryId}
+                            onClick={() => toggleCategory(sc.categoryId)}
+                            className={`
+                              inline-flex items-center gap-1.5 h-7 px-2 rounded-full
+                              text-xs font-medium transition-colors select-none
+                              ${checked
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                              }
+                            `}
+                            title={CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString()}
+                          >
+                            <img
+                              src={getCategoryIconUrl(sc.categoryId)}
+                              alt=""
+                              className="w-3.5 h-3.5 shrink-0 object-contain"
+                            />
+                            <span className="truncate max-w-[80px]">
+                              {CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString()}
+                            </span>
+                            <span
+                              className={`tabular-nums shrink-0 ${
+                                checked ? "text-primary-foreground/70" : "text-muted-foreground/60"
+                              }`}
+                            >
+                              {sc.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                )}
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             );
           })}
         </div>
-      </SheetContent>
-    </Sheet>
+      </ScrollArea>
+    </div>
   );
 }

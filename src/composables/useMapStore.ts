@@ -62,6 +62,12 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   toggleGroup: (key) => {
+    // __all__ 特殊处理：清空所有已选
+    if (key === "__all__") {
+      set({ visibleCategories: new Set() });
+      return;
+    }
+
     const groups = get().groups;
     const visible = get().visibleCategories;
     const group = groups.find((g) => g.key === key);
