@@ -1,4 +1,5 @@
 /* ─── 配置面板 Popover ─── */
+
 .config-popover-content {
   @apply w-72 gap-0;
 }
@@ -25,28 +26,226 @@
   @apply justify-start gap-2;
 }
 
-/* ─── 地图组件样式 ─── */
-
-/* 主视图：占满视口 */
-.view-home {
-  @apply w-full h-full;
+.config-action-icon {
+  @apply w-3.5 h-3.5;
 }
 
-/* 左右分栏容器 */
-.main-container {
-  @apply flex h-full w-full;
+.config-trigger-btn {
+  @apply h-7 w-7 shrink-0;
 }
 
-/* 分类筛选侧栏面板 */
+.config-trigger-icon {
+  @apply w-3.5 h-3.5;
+}
+
+.config-select-trigger {
+  @apply h-8 text-xs;
+}
+
+.config-save-row {
+  @apply flex gap-2;
+}
+
+.config-save-btn {
+  @apply h-8 px-2 shrink-0;
+}
+
+/* ─── 分类侧栏面板 ─── */
+
 .category-panel {
   @apply w-64 shrink-0 border-r bg-background flex flex-col overflow-hidden;
 }
 
 .category-panel-header {
   @apply px-3 py-3 border-b flex items-center justify-between;
+
+  &-title {
+    @apply font-semibold text-sm;
+  }
+
+  &-count {
+    @apply text-xs text-muted-foreground;
+  }
 }
 
-/* 地图容器：填满剩余空间 */
+/* 过滤 + 配置操作栏 */
+.category-toolbar {
+  @apply px-3 py-2 border-b shrink-0 flex items-center gap-2;
+
+  .toolbar-filter-btn {
+    @apply h-7 gap-1.5 px-2;
+
+    .filter-icon {
+      @apply w-3.5 h-3.5;
+    }
+
+    .filter-label {
+      @apply text-xs;
+    }
+  }
+}
+
+/* 过滤 Popover 搜索区 */
+.filter-search {
+  @apply flex items-center gap-2 mb-2;
+
+  .search-icon {
+    @apply w-3.5 h-3.5 shrink-0 text-muted-foreground;
+  }
+
+  .search-input {
+    @apply flex-1 h-7 px-2 text-xs rounded border border-input bg-transparent
+      outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+}
+
+/* 过滤 Popover 快捷操作 */
+.filter-actions {
+  @apply flex gap-2 mb-2;
+
+  .filter-action-btn {
+    @apply flex-1 h-7 gap-1;
+
+    .action-icon {
+      @apply w-3.5 h-3.5;
+    }
+  }
+
+  .filter-invert-btn {
+    @apply w-full h-7 mb-2;
+  }
+}
+
+/* 过滤 Popover 搜索结果 */
+.filter-results {
+  @apply max-h-48 overflow-y-auto;
+
+  .filter-empty {
+    @apply text-xs text-muted-foreground text-center py-2;
+  }
+
+  .filter-list {
+    @apply flex flex-wrap gap-1.5;
+  }
+}
+
+/* 子分类按钮（通用，Popover 内和侧栏共用） */
+.subcat-btn {
+  @apply inline-flex items-center gap-1.5 px-2 rounded-full
+    text-xs font-medium transition-colors select-none;
+
+  &--sm {
+    @apply h-6;
+
+    .subcat-icon {
+      @apply w-3 h-3;
+    }
+
+    .subcat-name {
+      @apply truncate max-w-[60px];
+    }
+  }
+
+  &--md {
+    @apply h-7;
+
+    .subcat-icon {
+      @apply w-3.5 h-3.5;
+    }
+
+    .subcat-name {
+      @apply truncate max-w-[80px];
+    }
+  }
+
+  &[data-checked="true"] {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+
+    .subcat-count {
+      @apply text-primary-foreground/70;
+    }
+  }
+
+  &[data-checked="false"] {
+    @apply bg-muted hover:bg-muted/80 text-muted-foreground;
+
+    .subcat-count {
+      @apply text-muted-foreground/60;
+    }
+  }
+
+  .subcat-icon {
+    @apply shrink-0 object-contain;
+  }
+
+  .subcat-name {
+    /* 尺寸由 --sm / --md 变体控制 */
+  }
+
+  .subcat-count {
+    @apply tabular-nums shrink-0;
+  }
+}
+
+/* ScrollArea */
+.category-scroll-area {
+  @apply flex-1;
+}
+
+.category-scroll-inner {
+  @apply py-1 h-[calc(100vh-11.75rem)];
+}
+
+/* 分组折叠面板 */
+.group-collapsible {
+  @apply border-b last:border-b-0;
+}
+
+.group-trigger {
+  @apply flex items-center gap-2 px-3 py-2.5 w-full
+    cursor-pointer hover:bg-muted/50 select-none
+    data-[state=open]:bg-muted/30;
+
+  .group-checkbox {
+    @apply shrink-0;
+  }
+
+  .group-icon {
+    @apply w-4 h-4 shrink-0 text-muted-foreground;
+  }
+
+  .group-label {
+    @apply flex-1 font-medium text-sm text-left truncate;
+  }
+
+  .group-count {
+    @apply text-muted-foreground text-xs tabular-nums shrink-0;
+  }
+
+  .group-chevron {
+    @apply w-3.5 h-3.5 shrink-0 text-muted-foreground/60
+      transition-transform data-[state=open]:rotate-180;
+  }
+}
+
+.group-content {
+  @apply pb-2 pt-1 px-3;
+
+  .group-subcats {
+    @apply flex flex-wrap gap-1.5;
+  }
+}
+
+/* ─── 地图组件 ─── */
+
+.view-home {
+  @apply w-full h-full flex;
+}
+
+.main-container {
+  @apply flex h-full w-full;
+}
+
 .map-container {
   @apply flex-1 relative overflow-hidden;
 }
@@ -56,22 +255,8 @@
   height: var(--map-height, 100%);
 }
 
-/* ScrollArea 滚动区域：flex-1 自然填满侧栏剩余空间 */
-.category-scroll-area {
-  @apply flex-1;
-}
+/* ─── Popup 标点内容 ─── */
 
-/* ScrollArea 内部滚动层 */
-.category-scroll-inner {
-  @apply py-1 h-[calc(100vh-11.75rem)];
-}
-
-/* 分类图标：像素锐利渲染 */
-.category-icon {
-  image-rendering: crisp-edges;
-}
-
-/* Popup 内容 */
 .popup-content {
   @apply min-w-30;
 }
@@ -92,16 +277,16 @@
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(1px);
   animation: map-overlay-in 200ms ease-out;
-}
 
-.map-overlay--loading {
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(3px);
-  pointer-events: auto;
-}
+  &--loading {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(3px);
+    pointer-events: auto;
+  }
 
-.map-overlay--filtering {
-  animation: map-overlay-flash 300ms ease-out forwards;
+  &--filtering {
+    animation: map-overlay-flash 300ms ease-out forwards;
+  }
 }
 
 .map-overlay-content {
@@ -115,20 +300,23 @@
   @apply text-sm font-medium text-foreground/80;
 }
 
-/* 加载旋转动画 */
 .map-overlay-spinner {
   @apply w-4 h-4 border-2 border-muted-foreground/30 border-t-foreground/70
     rounded-full shrink-0;
   animation: map-overlay-spin 0.8s linear infinite;
 }
 
+/* ─── 分类图标 ─── */
+
+.category-icon {
+  image-rendering: crisp-edges;
+}
+
+/* ─── Keyframes ─── */
+
 @keyframes map-overlay-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes map-overlay-flash {
@@ -150,7 +338,5 @@
 }
 
 @keyframes map-overlay-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
