@@ -96,4 +96,24 @@ button {
       @apply w-fit inline-flex items-center justify-center gap-2;
     }
   }
+
+  /* 缓存管理 */
+  .setting-cache-stats {
+    @apply flex flex-wrap gap-4 items-center p-3 bg-neutral-100 dark:bg-neutral-800 rounded-md;
+
+    .cache-stat-item {
+      @apply flex flex-col gap-1;
+
+      .label {
+        @apply text-xs text-neutral-500;
+      }
+      .value {
+        @apply text-sm font-medium;
+      }
+    }
+  }
+
+  .setting-cache-actions {
+    @apply flex flex-wrap gap-2 mt-3;
+  }
 }

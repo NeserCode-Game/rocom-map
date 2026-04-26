@@ -3,16 +3,49 @@ import { MapContainer as LeafletMapContainer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import { MAP_CONFIG, GAME_BOUNDS } from "../../lib/map/constants";
+import type { MapLocation } from "../../lib/map/types";
 import { fetchLocations } from "../../lib/map/api";
 import { useMapStore } from "../../composables/useMapStore";
 import { logger } from "../../lib/logger";
+
 import GameTileLayer from "./GameTileLayer";
 import MapMarkers from "./MapMarkers";
 import MapOverlay from "./MapOverlay";
+import MapStatusBar from "./MapStatusBar";
+
+const PROFILES_KEY = "rocom-map:profiles";
+const LAST_PROFILE_KEY = "rocom-map:last-profile";
+
+/** 从 localStorage 恢复上次使用的档案分类，首次使用时全选 */
+function restoreProfile(locations: MapLocation[]) {
+  const lastProfile = localStorage.getItem(LAST_PROFILE_KEY);
+  if (lastProfile) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) ?? "[]");
+      const prof = profiles.find((p: { name: string }) => p.name === lastProfile);
+      if (prof) {
+        const validCids = new Set(locations.map((l) => l.category_id));
+        const restored = new Set<number>(prof.visibleCategories.filter((c: number) => validCids.has(c)));
+        logger.info("DataLoader", "restoreProfile", "restored", {
+          profile: lastProfile,
+          total: restored.size,
+        });
+        return restored;
+      }
+    } catch (e) {
+      logger.warn("DataLoader", "restoreProfile", "parseError", { error: String(e) });
+    }
+  }
+  // 首次使用：全选所有分类
+  const allCids = new Set(locations.map((l) => l.category_id));
+  logger.info("DataLoader", "restoreProfile", "selectAll", { count: allCids.size });
+  return allCids;
+}
 
 /** 数据加载器 */
 function DataLoader() {
   const setLocations = useMapStore((s) => s.setLocations);
+  const prefetchIcons = useMapStore((s) => s.prefetchIcons);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,8 +56,15 @@ function DataLoader() {
         const locs = await fetchLocations();
         if (!cancelled) {
           setLocations(locs);
-          useMapStore.setState({ loading: false, overlay: { kind: 'idle' } });
+          const restored = restoreProfile(locs);
+          useMapStore.setState({ visibleCategories: restored, loading: false, overlay: { kind: 'idle' } });
           logger.info("MapContainer", "DataLoader", "fetch", { count: locs.length, success: true });
+
+          // 提取所有分类 ID，异步预下载图标到本地缓存
+          const catIds = [...new Set(locs.map(l => l.category_id))];
+          prefetchIcons(catIds).catch((e) => {
+            logger.warn("MapContainer", "DataLoader", "prefetchIcons", { error: String(e) });
+          });
         }
       } catch (err) {
         if (!cancelled) {
@@ -37,7 +77,7 @@ function DataLoader() {
     return () => {
       cancelled = true;
     };
-  }, [setLocations]);
+  }, [setLocations, prefetchIcons]);
 
   return null;
 }
@@ -112,6 +152,7 @@ export default function MapContainer() {
         <DataLoader />
       </LeafletMapContainer>
       <MapOverlay />
+      <MapStatusBar />
     </div>
   );
 }

@@ -1,15 +1,20 @@
-import { fetch } from "@tauri-apps/plugin-http";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import type { MapLocation } from "./types";
 import { API_LOCATION_LIST, REQUEST_HEADERS } from "./constants";
 import { logger } from "../../lib/logger";
 
+/**
+ * 获取地图标点数据
+ * 使用 Tauri HTTP 插件直接请求 API
+ * 数据在 Zustand store 中内存缓存，无需文件级缓存
+ */
 export async function fetchLocations(): Promise<MapLocation[]> {
   logger.info("api", "fetchLocations", "request", { url: API_LOCATION_LIST });
 
   try {
     logger.info("api", "fetchLocations", "fetching", {});
 
-    const res = await fetch(API_LOCATION_LIST, {
+    const res = await tauriFetch(API_LOCATION_LIST, {
       method: "GET",
       headers: {
         origin: REQUEST_HEADERS.origin,

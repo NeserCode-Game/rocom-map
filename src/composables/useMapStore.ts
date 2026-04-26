@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { MapLocation, MarkerGroup } from '../lib/map/types';
-import { MARKER_GROUPS } from '../lib/map/constants';
+import { MARKER_GROUPS, getCategoryIconUrl, CACHE_TTL } from '../lib/map/constants';
+import { cacheFetch, localPathToAssetUrl } from '../lib/cache';
 import { logger } from '../lib/logger';
 
 /** 遮罩层操作状态 */
@@ -19,8 +20,14 @@ interface MapState {
   error: string | null;
   /** 遮罩层状态 */
   overlay: OverlayState;
+  /** categoryId → 本地缓存 asset URL（图标走本地缓存） */
+  iconUrlMap: Map<number, string>;
 
   setLocations: (locs: MapLocation[]) => void;
+  /** 批量预下载分类图标到本地缓存 */
+  prefetchIcons: (categoryIds: number[]) => Promise<void>;
+  /** 获取分类图标的本地 URL（缓存命中返回本地路径，否则返回远程 URL） */
+  getIconUrl: (categoryId: number) => string;
   toggleCategory: (categoryId: number) => void;
   toggleGroup: (key: string) => void;
   showAllGroups: () => void;
@@ -37,6 +44,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   loading: false,
   error: null,
   overlay: { kind: 'idle' },
+  iconUrlMap: new Map(),
 
   setLocations: (locs) => {
     logger.info("store", "setLocations", "entry", { locCount: locs.length });
@@ -80,13 +88,46 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ locations: locs, groups, categoryIndex, visibleCategories: new Set() });
   },
 
+  prefetchIcons: async (categoryIds: number[]) => {
+    logger.info("store", "prefetchIcons", "start", { count: categoryIds.length });
+    const newMap = new Map(get().iconUrlMap);
+    let hit = 0;
+    let miss = 0;
+
+    // 逐个下载（图标数量不多，~82 个，且并发由 Rust 端 Semaphore 控制）
+    const tasks = categoryIds.map(async (cid) => {
+      // 已缓存则跳过
+      if (newMap.has(cid)) {
+        hit++;
+        return;
+      }
+      try {
+        const remoteUrl = getCategoryIconUrl(cid);
+        const localPath = await cacheFetch(remoteUrl, CACHE_TTL.assets);
+        newMap.set(cid, localPathToAssetUrl(localPath));
+        miss++;
+      } catch (e) {
+        logger.warn("store", "prefetchIcons", "fail", { cid, error: String(e) });
+        // 降级：保留远程 URL
+        newMap.set(cid, getCategoryIconUrl(cid));
+      }
+    });
+
+    await Promise.all(tasks);
+    set({ iconUrlMap: newMap });
+    logger.info("store", "prefetchIcons", "done", { hit, miss, total: newMap.size });
+  },
+
+  getIconUrl: (categoryId: number) => {
+    return get().iconUrlMap.get(categoryId) ?? getCategoryIconUrl(categoryId);
+  },
+
   toggleCategory: (categoryId) => {
     const next = new Set(get().visibleCategories);
     const action = next.has(categoryId) ? 'removed' : 'added';
     if (next.has(categoryId)) next.delete(categoryId);
     else next.add(categoryId);
 
-    // 显示过滤遮罩
     const catName = get().groups
       .flatMap(g => g.subCategories)
       .find(sc => sc.categoryId === categoryId);
@@ -96,7 +137,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       overlay: { kind: 'filtering', message: action === 'added' ? `显示分类 #${label}` : `隐藏分类 #${label}` },
     });
 
-    // 300ms 后自动隐藏遮罩
     setTimeout(() => {
       if (get().overlay.kind === 'filtering') {
         set({ overlay: { kind: 'idle' } });

@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useMapStore } from "../../composables/useMapStore";
-import { getCategoryIconUrl, CATEGORY_NAMES } from "../../lib/map/constants";
+import { CATEGORY_NAMES } from "../../lib/map/constants";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Collapsible,
@@ -51,6 +51,7 @@ export default function CategoryFilter() {
   const visibleCategories = useMapStore((s) => s.visibleCategories);
   const toggleCategory = useMapStore((s) => s.toggleCategory);
   const toggleGroup = useMapStore((s) => s.toggleGroup);
+  const getIconUrl = useMapStore((s) => s.getIconUrl);
 
   // 过滤 Popover 状态
   const [filterOpen, setFilterOpen] = useState(false);
@@ -217,7 +218,7 @@ export default function CategoryFilter() {
                           title={`${sc.groupLabel} - ${sc.name}`}
                         >
                           <img
-                            src={getCategoryIconUrl(sc.categoryId)}
+                            src={getIconUrl(sc.categoryId)}
                             alt=""
                             className="subcat-icon"
                           />
@@ -296,7 +297,7 @@ export default function CategoryFilter() {
                             }
                           >
                             <img
-                              src={getCategoryIconUrl(sc.categoryId)}
+                              src={getIconUrl(sc.categoryId)}
                               alt=""
                               className="subcat-icon"
                             />

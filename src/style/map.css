@@ -23,11 +23,11 @@
 }
 
 .config-action-btn {
-  @apply justify-start gap-2;
-}
+  @apply h-7 gap-1.5 justify-start;
 
-.config-action-icon {
-  @apply w-3.5 h-3.5;
+  .config-action-icon {
+    @apply w-3.5 h-3.5;
+  }
 }
 
 .config-trigger-btn {
@@ -112,7 +112,11 @@
   }
 
   .filter-invert-btn {
-    @apply w-full h-7 mb-2;
+    @apply w-full h-7 gap-1.5 mb-2;
+
+    .action-icon {
+      @apply w-3.5 h-3.5;
+    }
   }
 }
 
@@ -258,15 +262,57 @@
 /* ─── Popup 标点内容 ─── */
 
 .popup-content {
-  @apply min-w-30;
+  @apply min-w-48 max-w-64 flex flex-col gap-1;
+}
+
+.popup-title {
+  @apply text-sm font-semibold;
 }
 
 .popup-category {
-  @apply mt-1 text-xs opacity-70;
+  @apply text-xs opacity-70;
 }
 
 .popup-description {
-  @apply mt-0.5 text-xs opacity-60;
+  @apply text-xs opacity-60 leading-relaxed;
+}
+
+.popup-author {
+  @apply text-[10px] opacity-50 mt-1;
+}
+
+/* 指示图轮播 */
+.popup-carousel {
+  @apply relative mt-1.5 rounded-md overflow-hidden bg-muted/30;
+}
+
+.popup-carousel-img {
+  @apply w-full object-contain max-h-48;
+}
+
+.popup-carousel-btn {
+  @apply absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full
+    bg-black/40 text-white flex items-center justify-center
+    text-sm font-bold select-none cursor-pointer;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.popup-carousel:hover .popup-carousel-btn {
+  opacity: 1;
+}
+
+.popup-carousel-prev {
+  left: 4px;
+}
+
+.popup-carousel-next {
+  right: 4px;
+}
+
+.popup-carousel-indicator {
+  @apply absolute bottom-1 right-1.5 px-1.5 py-0.5 rounded
+    bg-black/50 text-[10px] text-white tabular-nums;
 }
 
 /* ─── 地图玻璃遮罩层 ─── */
@@ -310,6 +356,32 @@
 
 .category-icon {
   image-rendering: crisp-edges;
+}
+
+/* ─── 地图底部状态栏 ─── */
+
+.map-status-bar {
+  @apply absolute bottom-0 left-0 right-0 z-[1000] flex items-center
+    px-3 py-1 text-[11px] select-none;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.map-status-item {
+  @apply text-muted-foreground whitespace-nowrap;
+}
+
+.map-status-separator {
+  @apply mx-1.5 text-muted-foreground/40;
+}
+
+.map-status-spacer {
+  @apply flex-1;
+}
+
+.map-status-version {
+  @apply opacity-50;
 }
 
 /* ─── Keyframes ─── */
