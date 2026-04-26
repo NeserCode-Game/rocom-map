@@ -10,7 +10,7 @@ import Settings from "@/views/Settings";
 
 import { useNavigate } from "react-router";
 import { useTheme, I18nContext, useI18nLogic, nextTick } from "@/composables";
-import { createContext, useEffect } from "react";
+import { createContext } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAsyncEffect, useLocalStorageState } from "ahooks";
 import { AppTray } from "@/lib/tray";

@@ -1,8 +1,8 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Marker, Popup, useMap } from 'react-leaflet';
+import { useMemo, memo } from 'react';
+import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useMapStore } from '../../composables/useMapStore';
-import { getCategoryIconUrl } from '../../lib/map/constants';
+import { getCategoryIconUrl, CATEGORY_NAMES } from '../../lib/map/constants';
 import type { MapLocation } from '../../lib/map/types';
 
 /* icon 缓存：同一 categoryId 只创建一个 L.Icon 实例 */
@@ -23,60 +23,48 @@ function getIcon(categoryId: number): L.Icon {
   return icon;
 }
 
-/** 视野过滤：只渲染当前视口内的标点 */
-function useViewportFilter(locations: MapLocation[]): MapLocation[] {
-  const map = useMap();
-  const [bounds, setBounds] = useState(map.getBounds());
-
-  useEffect(() => {
-    const onMoveEnd = () => setBounds(map.getBounds());
-    map.on('moveend', onMoveEnd);
-    return () => { map.off('moveend', onMoveEnd); };
-  }, [map]);
-
-  return useMemo(() => {
-    if (locations.length === 0) return [];
-    return locations.filter((loc) => {
-      const latlng: L.LatLngExpression = [loc.latitude, loc.longitude];
-      return bounds.contains(latlng);
-    });
-  }, [locations, bounds]);
-}
-
-/** 单个标点组件 */
-function LocationMarker({ loc }: { loc: MapLocation }) {
+/** 单个标点组件 — memo 优化，避免父组件重渲染时全部重建 */
+const LocationMarker = memo(function LocationMarker({ loc }: { loc: MapLocation }) {
   const icon = useMemo(() => getIcon(loc.category_id), [loc.category_id]);
+  const catName = CATEGORY_NAMES[loc.category_id] ?? '';
 
   return (
     <Marker position={[loc.latitude, loc.longitude]} icon={icon}>
       <Popup>
-        <div style={{ minWidth: 120 }}>
+        <div className="popup-content">
           <strong>{loc.title}</strong>
+          {catName && (
+            <p className="popup-category">{catName}</p>
+          )}
           {loc.description && (
-            <p style={{ margin: '4px 0', fontSize: 12, opacity: 0.8 }}>
-              {loc.description}
-            </p>
+            <p className="popup-description">{loc.description}</p>
           )}
         </div>
       </Popup>
     </Marker>
   );
-}
+});
+
+const MAX_RENDER = 500;
 
 export default function MapMarkers() {
-  const locations = useMapStore((s) => s.locations);
-  const isCategoryVisible = useMapStore((s) => s.isCategoryVisible);
-  const visible = useViewportFilter(locations);
+  const categoryIndex = useMapStore((s) => s.categoryIndex);
+  const visibleCategories = useMapStore((s) => s.visibleCategories);
 
-  // 按分类过滤
-  const filtered = useMemo(
-    () => visible.filter((loc) => isCategoryVisible(loc.category_id)),
-    [visible, isCategoryVisible],
-  );
+  // 使用预建索引查找，而非全量 filter
+  const filtered = useMemo(() => {
+    if (visibleCategories.size === 0) return [];
+    const result: MapLocation[] = [];
+    for (const cid of visibleCategories) {
+      const locs = categoryIndex.get(cid);
+      if (locs) {
+        for (const loc of locs) result.push(loc);
+      }
+    }
+    return result;
+  }, [categoryIndex, visibleCategories]);
 
-  // 限制同时渲染数量，避免卡顿
-  const MAX_RENDER = 500;
-  const toRender = filtered.slice(0, MAX_RENDER);
+  const toRender = filtered.length > MAX_RENDER ? filtered.slice(0, MAX_RENDER) : filtered;
 
   return (
     <>

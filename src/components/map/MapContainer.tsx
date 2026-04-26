@@ -1,74 +1,72 @@
-import { useEffect, useRef, useState } from 'react';
-import { MapContainer as LeafletMapContainer } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer as LeafletMapContainer } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
-import { MAP_CONFIG, MAX_BOUNDS } from '../../lib/map/constants';
-import { fetchLocations } from '../../lib/map/api';
-import { useMapStore } from '../../composables/useMapStore';
-import GameTileLayer from './GameTileLayer';
-import MapMarkers from './MapMarkers';
-import CategoryFilter from './CategoryFilter';
+import { MAP_CONFIG, GAME_BOUNDS } from "../../lib/map/constants";
+import { fetchLocations } from "../../lib/map/api";
+import { useMapStore } from "../../composables/useMapStore";
+import { logger } from "../../lib/logger";
+import GameTileLayer from "./GameTileLayer";
+import MapMarkers from "./MapMarkers";
+import MapOverlay from "./MapOverlay";
 
 /** 数据加载器 */
 function DataLoader() {
   const setLocations = useMapStore((s) => s.setLocations);
-  useMapStore((s) => s.loading);
-  useMapStore((s) => s.error);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      useMapStore.setState({ loading: true, error: null });
+      useMapStore.setState({ loading: true, error: null, overlay: { kind: 'loading', message: '正在加载标点数据…' } });
+      logger.info("MapContainer", "DataLoader", "fetch", { started: true });
       try {
         const locs = await fetchLocations();
         if (!cancelled) {
           setLocations(locs);
-          useMapStore.setState({ loading: false });
+          useMapStore.setState({ loading: false, overlay: { kind: 'idle' } });
+          logger.info("MapContainer", "DataLoader", "fetch", { count: locs.length, success: true });
         }
       } catch (err) {
         if (!cancelled) {
-          useMapStore.setState({
-            loading: false,
-            error: err instanceof Error ? err.message : String(err),
-          });
+          const msg = err instanceof Error ? err.message : String(err);
+          useMapStore.setState({ loading: false, error: msg, overlay: { kind: 'idle' } });
+          logger.error("MapContainer", "DataLoader", "fetch", { error: msg });
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [setLocations]);
 
   return null;
 }
 
-/** 加载状态指示器 */
-function LoadingIndicator() {
-  const loading = useMapStore((s) => s.loading);
-  const error = useMapStore((s) => s.error);
-  if (!loading && !error) return null;
-
-  return (
-    <div style={{
-      position: 'absolute',
-      bottom: 10,
-      left: 10,
-      zIndex: 1000,
-      background: 'rgba(255,255,255,0.9)',
-      padding: '6px 12px',
-      borderRadius: 6,
-      fontSize: 13,
-      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-    }}>
-      {loading ? '⏳ 加载标点数据...' : `❌ ${error}`}
-    </div>
-  );
+/**
+ * 动态计算 minZoom：确保地图像素尺寸 ≥ 容器尺寸。
+ */
+function calcMinZoom(containerSize: number): number {
+  const { min, max } = MAP_CONFIG.zoom;
+  const { west, east, south, north } = MAP_CONFIG.bounds;
+  const spanLng = east - west;
+  const spanLat = north - south;
+  const span = Math.max(spanLng, spanLat);
+  const n = Math.log2((containerSize * 360) / (span * 256));
+  const neededZoom = Math.ceil(n);
+  return Math.max(min, Math.min(max, neededZoom));
 }
+
+// 游戏地图中心点 [lat, lng]
+const MAP_CENTER: [number, number] = [
+  (MAP_CONFIG.bounds.south + MAP_CONFIG.bounds.north) / 2,
+  (MAP_CONFIG.bounds.west + MAP_CONFIG.bounds.east) / 2,
+];
 
 /** 主地图容器 */
 export default function MapContainer() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
 
-  // 用 ResizeObserver 获取容器实际尺寸
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -82,27 +80,38 @@ export default function MapContainer() {
     return () => observer.disconnect();
   }, []);
 
+  const minZoom = useMemo(
+    () => calcMinZoom(Math.max(dimensions.width, dimensions.height)),
+    [dimensions.width, dimensions.height]
+  );
+
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
+      className="map-container"
+      style={
+        {
+          "--map-width": `${dimensions.width}px`,
+          "--map-height": `${dimensions.height}px`,
+        } as React.CSSProperties
+      }
     >
       <LeafletMapContainer
-        center={MAP_CONFIG.center}
+        center={MAP_CENTER}
         zoom={MAP_CONFIG.zoom.initial}
-        minZoom={MAP_CONFIG.zoom.min}
+        minZoom={minZoom}
         maxZoom={MAP_CONFIG.zoom.max}
-        maxBounds={MAX_BOUNDS}
+        maxBounds={GAME_BOUNDS}
         maxBoundsViscosity={1.0}
-        style={{ width: dimensions.width, height: dimensions.height }}
+        className="map-leaflet"
+        attributionControl={false}
         zoomControl={true}
       >
         <GameTileLayer />
         <MapMarkers />
         <DataLoader />
       </LeafletMapContainer>
-      <CategoryFilter />
-      <LoadingIndicator />
+      <MapOverlay />
     </div>
   );
 }
