@@ -23,11 +23,11 @@
 }
 
 .config-action-btn {
-  @apply justify-start gap-2;
-}
+  @apply h-7 gap-1.5 justify-start;
 
-.config-action-icon {
-  @apply w-3.5 h-3.5;
+  .config-action-icon {
+    @apply w-3.5 h-3.5;
+  }
 }
 
 .config-trigger-btn {
@@ -112,7 +112,11 @@
   }
 
   .filter-invert-btn {
-    @apply w-full h-7 mb-2;
+    @apply w-full h-7 gap-1.5 mb-2;
+
+    .action-icon {
+      @apply w-3.5 h-3.5;
+    }
   }
 }
 

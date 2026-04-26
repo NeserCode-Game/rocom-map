@@ -2,30 +2,30 @@ import { useMemo, memo } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useMapStore } from '../../composables/useMapStore';
-import { getCategoryIconUrl, CATEGORY_NAMES } from '../../lib/map/constants';
+import { CATEGORY_NAMES } from '../../lib/map/constants';
 import type { MapLocation } from '../../lib/map/types';
 
 /* icon 缓存：同一 categoryId 只创建一个 L.Icon 实例 */
-const iconCache = new Map<number, L.Icon>();
+const iconCache = new Map<string, L.Icon>();
 
-function getIcon(categoryId: number): L.Icon {
-  let icon = iconCache.get(categoryId);
+function getIconByUrl(iconUrl: string): L.Icon {
+  let icon = iconCache.get(iconUrl);
   if (!icon) {
     icon = L.icon({
-      iconUrl: getCategoryIconUrl(categoryId),
+      iconUrl,
       iconSize: [24, 24],
       iconAnchor: [12, 12],
       popupAnchor: [0, -14],
       className: '',
     });
-    iconCache.set(categoryId, icon);
+    iconCache.set(iconUrl, icon);
   }
   return icon;
 }
 
 /** 单个标点组件 — memo 优化，避免父组件重渲染时全部重建 */
-const LocationMarker = memo(function LocationMarker({ loc }: { loc: MapLocation }) {
-  const icon = useMemo(() => getIcon(loc.category_id), [loc.category_id]);
+const LocationMarker = memo(function LocationMarker({ loc, iconUrl }: { loc: MapLocation; iconUrl: string }) {
+  const icon = useMemo(() => getIconByUrl(iconUrl), [iconUrl]);
   const catName = CATEGORY_NAMES[loc.category_id] ?? '';
 
   return (
@@ -50,6 +50,7 @@ const MAX_RENDER = 500;
 export default function MapMarkers() {
   const categoryIndex = useMapStore((s) => s.categoryIndex);
   const visibleCategories = useMapStore((s) => s.visibleCategories);
+  const getIconUrl = useMapStore((s) => s.getIconUrl);
 
   // 使用预建索引查找，而非全量 filter
   const filtered = useMemo(() => {
@@ -69,7 +70,11 @@ export default function MapMarkers() {
   return (
     <>
       {toRender.map((loc) => (
-        <LocationMarker key={loc.id} loc={loc} />
+        <LocationMarker
+          key={loc.id}
+          loc={loc}
+          iconUrl={getIconUrl(loc.category_id)}
+        />
       ))}
     </>
   );
