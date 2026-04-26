@@ -1,11 +1,32 @@
 import L from 'leaflet';
 import type { MarkerGroup } from './types';
 
+/* ─── 环境变量（从 .env 读取） ─── */
+
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://terra-api.17173.com';
+const API_MAP_ID = Number(import.meta.env.VITE_API_MAP_ID ?? 4010);
+const TILE_BASE_URL = import.meta.env.VITE_TILE_BASE ?? 'https://ue.17173cdn.com/a/terra/tiles/rocom';
+const TILE_VERSION = import.meta.env.VITE_TILE_VERSION ?? '4010_v3_7f2d9c';
+const ICON_BASE_URL = import.meta.env.VITE_ICON_BASE ?? 'https://ue.17173cdn.com/a/terra/icon/rocom';
+
+/** 请求头伪装（用于 API 调用） */
+export const REQUEST_HEADERS = {
+  origin: import.meta.env.VITE_REQUEST_ORIGIN ?? 'https://map.17173.com',
+  referer: import.meta.env.VITE_REQUEST_REFERER ?? 'https://map.17173.com/',
+} as const;
+
+/** 缓存 TTL（毫秒） */
+export const CACHE_TTL = {
+  /** 瓦片缓存过期时间：默认 2h */
+  tiles: Number(import.meta.env.VITE_CACHE_TILES_TTL_MS ?? 7200000),
+  /** 素材图片缓存过期时间：默认 24h */
+  assets: Number(import.meta.env.VITE_CACHE_ASSETS_TTL_MS ?? 86400000),
+} as const;
+
 /* ─── 游戏地图配置 ─── */
-const MAP_ID = 4010;
-const TILE_VERSION = '4010_v3_7f2d9c';
+
 export const MAP_CONFIG = {
-  mapId: MAP_ID,
+  mapId: API_MAP_ID,
   gameTitle: '洛克王国世界',
   version: 'v3',
   bounds: {
@@ -14,11 +35,10 @@ export const MAP_CONFIG = {
   zoom: { min: 9, max: 13, initial: 11 },
 } as const;
 
-export const TILE_BASE = `https://ue.17173cdn.com/a/terra/tiles/rocom/${TILE_VERSION}`;
+export const TILE_BASE = `${TILE_BASE_URL}/${TILE_VERSION}`;
 export const TILE_URL_TEMPLATE = `${TILE_BASE}/{z}/{y}_{x}.png?v1`;
-export const API_BASE = 'https://terra-api.17173.com';
-export const API_LOCATION_LIST = `${API_BASE}/app/location/list?mapIds=${MAP_ID}`;
-export const ICON_BASE = `https://ue.17173cdn.com/a/terra/icon/rocom`;
+export const API_LOCATION_LIST = `${API_BASE}/app/location/list?mapIds=${API_MAP_ID}`;
+export const ICON_BASE = ICON_BASE_URL;
 
 export function getCategoryIconUrl(categoryId: number): string {
   return `${ICON_BASE}/${categoryId}.png`;
@@ -36,7 +56,7 @@ export const MARKER_GROUPS: Omit<MarkerGroup, 'count' | 'subCategories'>[] = [
   {
     key: 'collect',
     label: '收集',
-    categoryIds: [17310030047, 17310030035, 17310030001, 17310030031, 17310030032, 17310030003, 17310030033, 17310030034, 17310030036, 17310030004, 17310030002],
+    categoryIds: [17310030047, 17310030035, 17310030001, 17310030031, 17310030032, 17310030033, 17310030034, 17310030036, 17310030004, 17310030002],
   },
   {
     key: 'grass',
