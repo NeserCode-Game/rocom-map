@@ -1,6 +1,6 @@
 import { fetch } from "@tauri-apps/plugin-http";
 import type { MapLocation } from "./types";
-import { API_LOCATION_LIST } from "./constants";
+import { API_LOCATION_LIST, REQUEST_HEADERS } from "./constants";
 import { logger } from "../../lib/logger";
 
 export async function fetchLocations(): Promise<MapLocation[]> {
@@ -12,8 +12,8 @@ export async function fetchLocations(): Promise<MapLocation[]> {
     const res = await fetch(API_LOCATION_LIST, {
       method: "GET",
       headers: {
-        origin: "https://map.17173.com",
-        referer: "https://map.17173.com/",
+        origin: REQUEST_HEADERS.origin,
+        referer: REQUEST_HEADERS.referer,
       },
     });
 
