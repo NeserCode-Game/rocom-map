@@ -7,25 +7,19 @@ export async function fetchLocations(): Promise<MapLocation[]> {
   logger.info("api", "fetchLocations", "request", { url: API_LOCATION_LIST });
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
     logger.info("api", "fetchLocations", "fetching", {});
 
     const res = await fetch(API_LOCATION_LIST, {
       method: "GET",
       headers: {
-        "origin": "https://map.17173.com",
-        "referer": "https://map.17173.com/",
+        origin: "https://map.17173.com",
+        referer: "https://map.17173.com/",
       },
-      signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
-    logger.info("api", "fetchLocations", "response", { 
-      status: res.status, 
-      ok: res.ok 
+    logger.info("api", "fetchLocations", "response", {
+      status: res.status,
+      ok: res.ok,
     });
 
     if (!res.ok) {
@@ -41,7 +35,9 @@ export async function fetchLocations(): Promise<MapLocation[]> {
       ? data
       : (data?.data ?? []);
 
-    logger.info("api", "fetchLocations", "success", { total: locations.length });
+    logger.info("api", "fetchLocations", "success", {
+      total: locations.length,
+    });
     return locations;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

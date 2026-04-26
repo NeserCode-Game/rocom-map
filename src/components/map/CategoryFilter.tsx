@@ -17,7 +17,11 @@ import {
 import { useMapStore } from "../../composables/useMapStore";
 import { getCategoryIconUrl, CATEGORY_NAMES } from "../../lib/map/constants";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { ConfigPanel } from "./ConfigPanel";
 import {
   Popover,
@@ -28,7 +32,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 // 8 分组的 lucide 图标映射
-const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const GROUP_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   collect: Package,
   grass: Flower2,
   fruit: Apple,
@@ -49,12 +56,12 @@ export default function CategoryFilter() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  if (groups.length === 0) return null;
-
   const allCids = new Set(
     groups.flatMap((g) => g.subCategories.map((sc) => sc.categoryId)),
   );
-  const visibleCount = [...visibleCategories].filter((c) => allCids.has(c)).length;
+  const visibleCount = [...visibleCategories].filter((c) =>
+    allCids.has(c),
+  ).length;
 
   function isGroupAllChecked(key: string): boolean {
     const g = groups.find((g) => g.key === key);
@@ -65,7 +72,9 @@ export default function CategoryFilter() {
   function isGroupPartialChecked(key: string): boolean {
     const g = groups.find((g) => g.key === key);
     if (!g || g.subCategories.length === 0) return false;
-    const checked = g.subCategories.filter((sc) => visibleCategories.has(sc.categoryId)).length;
+    const checked = g.subCategories.filter((sc) =>
+      visibleCategories.has(sc.categoryId),
+    ).length;
     return checked > 0 && checked < g.subCategories.length;
   }
 
@@ -91,7 +100,13 @@ export default function CategoryFilter() {
   const filteredSubCategories = useMemo(() => {
     if (!searchQuery.trim()) return null;
     const query = searchQuery.toLowerCase();
-    const result: Array<{ groupId: string; groupLabel: string; categoryId: number; name: string; count: number }> = [];
+    const result: Array<{
+      groupId: string;
+      groupLabel: string;
+      categoryId: number;
+      name: string;
+      count: number;
+    }> = [];
     for (const group of groups) {
       for (const sc of group.subCategories) {
         const name = CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString();
@@ -109,6 +124,8 @@ export default function CategoryFilter() {
     return result;
   }, [groups, searchQuery]);
 
+  if (groups.length === 0) return null;
+
   return (
     <div className="category-panel">
       {/* 标题 */}
@@ -123,11 +140,7 @@ export default function CategoryFilter() {
       <div className="px-3 py-2 border-b shrink-0 flex items-center gap-2">
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1.5 px-2"
-            >
+            <Button variant="outline" size="sm" className="h-7 gap-1.5 px-2">
               <Filter className="w-3.5 h-3.5" />
               <span className="text-xs">过滤</span>
             </Button>
@@ -202,9 +215,10 @@ export default function CategoryFilter() {
                           className={`
                             inline-flex items-center gap-1.5 h-6 px-2 rounded-full
                             text-xs font-medium transition-colors select-none
-                            ${checked
-                              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                              : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                            ${
+                              checked
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-muted hover:bg-muted/80 text-muted-foreground"
                             }
                           `}
                           title={`${sc.groupLabel} - ${sc.name}`}
@@ -214,7 +228,9 @@ export default function CategoryFilter() {
                             alt=""
                             className="w-3 h-3 shrink-0 object-contain"
                           />
-                          <span className="truncate max-w-[60px]">{sc.name}</span>
+                          <span className="truncate max-w-[60px]">
+                            {sc.name}
+                          </span>
                         </button>
                       );
                     })}
@@ -288,12 +304,16 @@ export default function CategoryFilter() {
                             className={`
                               inline-flex items-center gap-1.5 h-7 px-2 rounded-full
                               text-xs font-medium transition-colors select-none
-                              ${checked
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                              ${
+                                checked
+                                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
                               }
                             `}
-                            title={CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString()}
+                            title={
+                              CATEGORY_NAMES[sc.categoryId] ??
+                              sc.categoryId.toString()
+                            }
                           >
                             <img
                               src={getCategoryIconUrl(sc.categoryId)}
@@ -301,11 +321,14 @@ export default function CategoryFilter() {
                               className="w-3.5 h-3.5 shrink-0 object-contain"
                             />
                             <span className="truncate max-w-[80px]">
-                              {CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString()}
+                              {CATEGORY_NAMES[sc.categoryId] ??
+                                sc.categoryId.toString()}
                             </span>
                             <span
                               className={`tabular-nums shrink-0 ${
-                                checked ? "text-primary-foreground/70" : "text-muted-foreground/60"
+                                checked
+                                  ? "text-primary-foreground/70"
+                                  : "text-muted-foreground/60"
                               }`}
                             >
                               {sc.count}

@@ -27,9 +27,14 @@
 
 /* ─── 地图组件样式 ─── */
 
-/* 主视图：左右分栏布局 */
+/* 主视图：占满视口 */
 .view-home {
   @apply w-full h-full;
+}
+
+/* 左右分栏容器 */
+.main-container {
+  @apply flex h-full w-full;
 }
 
 /* 分类筛选侧栏面板 */
@@ -43,30 +48,22 @@
 
 /* 地图容器：填满剩余空间 */
 .map-container {
-  @apply w-full h-full relative;
+  @apply flex-1 relative overflow-hidden;
 }
 
 .map-leaflet {
-  width: var(--map-width, 600px);
-  height: var(--map-height, 600px);
+  width: var(--map-width, 100%);
+  height: var(--map-height, 100%);
 }
 
-/* 加载状态指示器 */
-.map-loading-indicator {
-  @apply absolute bottom-2.5 left-2.5 z-[1000]
-    bg-white/90 dark:bg-neutral-800/90
-    px-3 py-1.5 rounded-md text-[13px]
-    shadow-[0_1px_4px_rgba(0,0,0,0.1)];
-}
-
-/* ScrollArea 滚动区域（自定义高度） */
+/* ScrollArea 滚动区域：flex-1 自然填满侧栏剩余空间 */
 .category-scroll-area {
-  height: calc(100vh - 11.85rem);
+  @apply flex-1;
 }
 
 /* ScrollArea 内部滚动层 */
 .category-scroll-inner {
-  @apply py-1;
+  @apply py-1 h-[calc(100vh-11.75rem)];
 }
 
 /* 分类图标：像素锐利渲染 */
@@ -76,7 +73,7 @@
 
 /* Popup 内容 */
 .popup-content {
-  @apply min-w-[120px];
+  @apply min-w-30;
 }
 
 .popup-category {
@@ -85,4 +82,75 @@
 
 .popup-description {
   @apply mt-0.5 text-xs opacity-60;
+}
+
+/* ─── 地图玻璃遮罩层 ─── */
+
+.map-overlay {
+  @apply absolute inset-0 z-1000 flex items-center justify-center
+    pointer-events-none select-none;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(1px);
+  animation: map-overlay-in 200ms ease-out;
+}
+
+.map-overlay--loading {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(3px);
+  pointer-events: auto;
+}
+
+.map-overlay--filtering {
+  animation: map-overlay-flash 300ms ease-out forwards;
+}
+
+.map-overlay-content {
+  @apply flex items-center gap-2.5 px-5 py-3 rounded-xl
+    bg-white/85 dark:bg-neutral-900/85
+    shadow-[0_2px_12px_rgba(0,0,0,0.12)]
+    backdrop-blur-sm;
+}
+
+.map-overlay-text {
+  @apply text-sm font-medium text-foreground/80;
+}
+
+/* 加载旋转动画 */
+.map-overlay-spinner {
+  @apply w-4 h-4 border-2 border-muted-foreground/30 border-t-foreground/70
+    rounded-full shrink-0;
+  animation: map-overlay-spin 0.8s linear infinite;
+}
+
+@keyframes map-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes map-overlay-flash {
+  0% {
+    opacity: 0;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(2px);
+  }
+  30% {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(2px);
+  }
+  100% {
+    opacity: 0;
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(0px);
+  }
+}
+
+@keyframes map-overlay-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
