@@ -11,6 +11,7 @@ import { logger } from "../../lib/logger";
 import GameTileLayer from "./GameTileLayer";
 import MapMarkers from "./MapMarkers";
 import MapOverlay from "./MapOverlay";
+import MapStatusBar from "./MapStatusBar";
 
 const PROFILES_KEY = "rocom-map:profiles";
 const LAST_PROFILE_KEY = "rocom-map:last-profile";
@@ -151,6 +152,7 @@ export default function MapContainer() {
         <DataLoader />
       </LeafletMapContainer>
       <MapOverlay />
+      <MapStatusBar />
     </div>
   );
 }

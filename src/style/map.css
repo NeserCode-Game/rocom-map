@@ -358,6 +358,32 @@
   image-rendering: crisp-edges;
 }
 
+/* ─── 地图底部状态栏 ─── */
+
+.map-status-bar {
+  @apply absolute bottom-0 left-0 right-0 z-[1000] flex items-center
+    px-3 py-1 text-[11px] select-none;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.map-status-item {
+  @apply text-muted-foreground whitespace-nowrap;
+}
+
+.map-status-separator {
+  @apply mx-1.5 text-muted-foreground/40;
+}
+
+.map-status-spacer {
+  @apply flex-1;
+}
+
+.map-status-version {
+  @apply opacity-50;
+}
+
 /* ─── Keyframes ─── */
 
 @keyframes map-overlay-in {
