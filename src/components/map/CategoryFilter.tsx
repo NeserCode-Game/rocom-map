@@ -130,59 +130,59 @@ export default function CategoryFilter() {
     <div className="category-panel">
       {/* 标题 */}
       <div className="category-panel-header">
-        <h2 className="font-semibold text-sm">分类筛选</h2>
-        <span className="text-xs text-muted-foreground">
+        <h2 className="category-panel-header-title">分类筛选</h2>
+        <span className="category-panel-header-count">
           {visibleCount}/{allCids.size}
         </span>
       </div>
 
       {/* 过滤按钮 + 设置 */}
-      <div className="px-3 py-2 border-b shrink-0 flex items-center gap-2">
+      <div className="category-toolbar">
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 gap-1.5 px-2">
-              <Filter className="w-3.5 h-3.5" />
-              <span className="text-xs">过滤</span>
+            <Button variant="outline" size="sm" className="toolbar-filter-btn">
+              <Filter className="filter-icon" />
+              <span className="filter-label">过滤</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent
             side="right"
             align="start"
             sideOffset={8}
-            className="w-72"
+            className="config-popover-content"
           >
             {/* 搜索框 */}
-            <div className="flex items-center gap-2 mb-2">
-              <Search className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+            <div className="filter-search">
+              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="搜索分类名称..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 h-7 px-2 text-xs rounded border border-input bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="search-input"
               />
             </div>
 
             <Separator className="my-2" />
 
             {/* 快捷操作 */}
-            <div className="flex gap-2 mb-2">
+            <div className="filter-actions">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSelectAll}
-                className="flex-1 h-7 gap-1"
+                className="filter-action-btn"
               >
-                <Check className="w-3.5 h-3.5" />
+                <Check className="action-icon" />
                 全选
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleDeselectAll}
-                className="flex-1 h-7 gap-1"
+                className="filter-action-btn"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="action-icon" />
                 全不选
               </Button>
             </div>
@@ -190,7 +190,7 @@ export default function CategoryFilter() {
               size="sm"
               variant="outline"
               onClick={handleInvert}
-              className="w-full h-7 mb-2"
+              className="filter-invert-btn"
             >
               反选
             </Button>
@@ -199,36 +199,29 @@ export default function CategoryFilter() {
 
             {/* 搜索结果 */}
             {filteredSubCategories ? (
-              <div className="max-h-48 overflow-y-auto">
+              <div className="filter-results">
                 {filteredSubCategories.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-2">
+                  <p className="filter-empty">
                     无匹配结果
                   </p>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="filter-list">
                     {filteredSubCategories.map((sc) => {
                       const checked = visibleCategories.has(sc.categoryId);
                       return (
                         <button
                           key={sc.categoryId}
                           onClick={() => toggleCategory(sc.categoryId)}
-                          className={`
-                            inline-flex items-center gap-1.5 h-6 px-2 rounded-full
-                            text-xs font-medium transition-colors select-none
-                            ${
-                              checked
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                            }
-                          `}
+                          className={`subcat-btn subcat-btn--sm`}
+                          data-checked={checked}
                           title={`${sc.groupLabel} - ${sc.name}`}
                         >
                           <img
                             src={getCategoryIconUrl(sc.categoryId)}
                             alt=""
-                            className="w-3 h-3 shrink-0 object-contain"
+                            className="subcat-icon"
                           />
-                          <span className="truncate max-w-[60px]">
+                          <span className="subcat-name">
                             {sc.name}
                           </span>
                         </button>
@@ -238,7 +231,7 @@ export default function CategoryFilter() {
                 )}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground text-center py-2">
+              <p className="filter-empty">
                 输入关键词搜索分类
               </p>
             )}
@@ -258,17 +251,11 @@ export default function CategoryFilter() {
             return (
               <Collapsible
                 key={group.key}
-                className="border-b last:border-b-0"
+                className="group-collapsible"
                 defaultOpen={true}
               >
                 {/* 分组行 */}
-                <CollapsibleTrigger
-                  className="
-                    flex items-center gap-2 px-3 py-2.5 w-full
-                    cursor-pointer hover:bg-muted/50 select-none
-                    data-[state=open]:bg-muted/30
-                  "
-                >
+                <CollapsibleTrigger className="group-trigger">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -277,39 +264,32 @@ export default function CategoryFilter() {
                     }}
                     onChange={() => toggleGroup(group.key)}
                     onClick={(e) => e.stopPropagation()}
-                    className="shrink-0"
+                    className="group-checkbox"
                   />
                   {IconComponent && (
-                    <IconComponent className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    <IconComponent className="group-icon" />
                   )}
-                  <span className="flex-1 font-medium text-sm text-left truncate">
+                  <span className="group-label">
                     {group.label}
                   </span>
-                  <span className="text-muted-foreground text-xs tabular-nums shrink-0">
+                  <span className="group-count">
                     {group.count}
                   </span>
-                  <ChevronDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground/60 transition-transform data-[state=open]:rotate-180" />
+                  <ChevronDown className="group-chevron" />
                 </CollapsibleTrigger>
 
-                {/* 子分类列表：inline 按钮行 */}
+                {/* 子分类列表 */}
                 <CollapsibleContent>
-                  <div className="pb-2 pt-1 px-3">
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="group-content">
+                    <div className="group-subcats">
                       {group.subCategories.map((sc) => {
                         const checked = visibleCategories.has(sc.categoryId);
                         return (
                           <button
                             key={sc.categoryId}
                             onClick={() => toggleCategory(sc.categoryId)}
-                            className={`
-                              inline-flex items-center gap-1.5 h-7 px-2 rounded-full
-                              text-xs font-medium transition-colors select-none
-                              ${
-                                checked
-                                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                              }
-                            `}
+                            className="subcat-btn subcat-btn--md"
+                            data-checked={checked}
                             title={
                               CATEGORY_NAMES[sc.categoryId] ??
                               sc.categoryId.toString()
@@ -318,19 +298,13 @@ export default function CategoryFilter() {
                             <img
                               src={getCategoryIconUrl(sc.categoryId)}
                               alt=""
-                              className="w-3.5 h-3.5 shrink-0 object-contain"
+                              className="subcat-icon"
                             />
-                            <span className="truncate max-w-[80px]">
+                            <span className="subcat-name">
                               {CATEGORY_NAMES[sc.categoryId] ??
                                 sc.categoryId.toString()}
                             </span>
-                            <span
-                              className={`tabular-nums shrink-0 ${
-                                checked
-                                  ? "text-primary-foreground/70"
-                                  : "text-muted-foreground/60"
-                              }`}
-                            >
+                            <span className="subcat-count">
                               {sc.count}
                             </span>
                           </button>

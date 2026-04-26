@@ -178,10 +178,10 @@ export function ConfigPanel() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 shrink-0"
+          className="config-trigger-btn"
           title="配置"
         >
-          <Settings className="w-3.5 h-3.5" />
+          <Settings className="config-trigger-icon" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -193,7 +193,7 @@ export function ConfigPanel() {
         <div className="config-section">
           <p className="config-label">配置档案</p>
           <Select value={selectedProfile} onValueChange={handleSelect}>
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="config-select-trigger">
               <SelectValue placeholder="选择或新建档案…" />
             </SelectTrigger>
             <SelectContent>
@@ -215,7 +215,7 @@ export function ConfigPanel() {
 
         <div className="config-section">
           <p className="config-label">保存当前配置</p>
-          <div className="flex gap-2">
+          <div className="config-save-row">
             <input
               type="text"
               placeholder="档案名称"
@@ -229,9 +229,9 @@ export function ConfigPanel() {
               variant="outline"
               onClick={handleSave}
               disabled={!saveName.trim()}
-              className="h-8 px-2 shrink-0"
+              className="config-save-btn"
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="config-action-icon" />
             </Button>
           </div>
         </div>
@@ -245,7 +245,7 @@ export function ConfigPanel() {
             onClick={handleExport}
             className="config-action-btn"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="config-action-icon" />
             导出 JSON
           </Button>
           <Button
@@ -254,7 +254,7 @@ export function ConfigPanel() {
             onClick={handleImport}
             className="config-action-btn"
           >
-            <Upload className="w-3.5 h-3.5" />
+            <Upload className="config-action-icon" />
             导入 JSON
           </Button>
           <Button
@@ -264,7 +264,7 @@ export function ConfigPanel() {
             disabled={!selectedProfile}
             className="config-action-btn"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="config-action-icon" />
             删除档案
           </Button>
         </div>
