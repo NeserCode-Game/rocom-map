@@ -1,3 +1,9 @@
+/** 标点贡献者 */
+export interface LocationAuthor {
+  nickName: string;
+  userId: string;
+}
+
 /** 游戏标点数据 */
 export interface MapLocation {
   id: number;
@@ -9,7 +15,14 @@ export interface MapLocation {
   category_id: number;
   title: string;
   description: string;
+  /** 封面图 URL */
+  image?: string;
+  /** 指示图 URL 列表 */
   images: string[];
+  /** 视频链接 */
+  video_url?: string;
+  /** 贡献者 */
+  author?: LocationAuthor;
   [key: string]: unknown;
 }
 
