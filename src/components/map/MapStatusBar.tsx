@@ -1,5 +1,17 @@
+import { useMemo } from 'react';
 import { useMapStore } from '../../composables/useMapStore';
+import type { ViewportBounds } from '../../composables/useMapStore';
 import { MAP_CONFIG } from '../../lib/map/constants';
+
+/** 标点是否在视口内 */
+function isInViewport(loc: { latitude: number; longitude: number }, vb: ViewportBounds): boolean {
+  return (
+    loc.latitude >= vb.minLat &&
+    loc.latitude <= vb.maxLat &&
+    loc.longitude >= vb.minLng &&
+    loc.longitude <= vb.maxLng
+  );
+}
 
 /** 地图底部状态栏：显示数据统计与版本 */
 export default function MapStatusBar() {
@@ -8,13 +20,29 @@ export default function MapStatusBar() {
   const categoryIndex = useMapStore((s) => s.categoryIndex);
   const loading = useMapStore((s) => s.loading);
   const iconUrlMap = useMapStore((s) => s.iconUrlMap);
+  const viewportBounds = useMapStore((s) => s.viewportBounds);
 
-  // 计算可见标点数
-  let visibleCount = 0;
+  // 已选分类的总标点数
+  let selectedCount = 0;
   for (const cid of visibleCategories) {
     const arr = categoryIndex.get(cid);
-    if (arr) visibleCount += arr.length;
+    if (arr) selectedCount += arr.length;
   }
+
+  // 视口内可见的已选标点数
+  const viewportCount = useMemo(() => {
+    if (!viewportBounds || visibleCategories.size === 0) return null;
+    let count = 0;
+    for (const cid of visibleCategories) {
+      const arr = categoryIndex.get(cid);
+      if (arr) {
+        for (const loc of arr) {
+          if (isInViewport(loc, viewportBounds)) count++;
+        }
+      }
+    }
+    return count;
+  }, [viewportBounds, visibleCategories, categoryIndex]);
 
   const iconCached = iconUrlMap.size;
   const totalCats = categoryIndex.size;
@@ -22,7 +50,11 @@ export default function MapStatusBar() {
   return (
     <div className="map-status-bar">
       <span className="map-status-item">
-        {loading ? '⏳ 加载中…' : `📍 ${visibleCount.toLocaleString()} / ${locations.length.toLocaleString()}`}
+        {loading
+          ? '⏳ 加载中…'
+          : viewportCount !== null
+            ? `📍 视口 ${viewportCount.toLocaleString()} / 已选 ${selectedCount.toLocaleString()}`
+            : `📍 ${selectedCount.toLocaleString()} / ${locations.length.toLocaleString()}`}
       </span>
       <span className="map-status-separator">·</span>
       <span className="map-status-item">

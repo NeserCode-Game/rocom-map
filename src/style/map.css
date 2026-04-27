@@ -19,11 +19,11 @@
 }
 
 .config-actions {
-  @apply flex flex-col gap-1.5;
+  @apply flex flex-row gap-1.5;
 }
 
 .config-action-btn {
-  @apply h-7 gap-1.5 justify-start;
+  @apply h-7 gap-1.5 justify-center flex-1;
 
   .config-action-icon {
     @apply w-3.5 h-3.5;
@@ -68,126 +68,91 @@
   }
 }
 
-/* 过滤 + 配置操作栏 */
+/* 快捷操作 + 配置操作栏 */
 .category-toolbar {
   @apply px-3 py-2 border-b shrink-0 flex items-center gap-2;
 
-  .toolbar-filter-btn {
+  .toolbar-action-btn {
     @apply h-7 gap-1.5 px-2;
 
-    .filter-icon {
+    .toolbar-action-icon {
       @apply w-3.5 h-3.5;
     }
 
-    .filter-label {
+    .toolbar-action-label {
       @apply text-xs;
     }
   }
 }
 
-/* 过滤 Popover 搜索区 */
-.filter-search {
-  @apply flex items-center gap-2 mb-2;
-
-  .search-icon {
-    @apply w-3.5 h-3.5 shrink-0 text-muted-foreground;
-  }
-
-  .search-input {
-    @apply flex-1 h-7 px-2 text-xs rounded border border-input bg-transparent
-      outline-none focus-visible:ring-2 focus-visible:ring-ring;
-  }
+/* 快捷操作 Popover 区段 */
+.quick-actions-section {
+  @apply flex flex-col gap-1.5;
 }
 
-/* 过滤 Popover 快捷操作 */
-.filter-actions {
-  @apply flex gap-2 mb-2;
-
-  .filter-action-btn {
-    @apply flex-1 h-7 gap-1;
-
-    .action-icon {
-      @apply w-3.5 h-3.5;
-    }
-  }
-
-  .filter-invert-btn {
-    @apply w-full h-7 gap-1.5 mb-2;
-
-    .action-icon {
-      @apply w-3.5 h-3.5;
-    }
-  }
+.quick-actions-row {
+  @apply flex gap-1.5;
 }
 
-/* 过滤 Popover 搜索结果 */
-.filter-results {
-  @apply max-h-48 overflow-y-auto;
 
-  .filter-empty {
-    @apply text-xs text-muted-foreground text-center py-2;
-  }
 
-  .filter-list {
-    @apply flex flex-wrap gap-1.5;
-  }
-}
+
 
 /* 子分类按钮（通用，Popover 内和侧栏共用） */
 .subcat-btn {
   @apply inline-flex items-center gap-1.5 px-2 rounded-full
     text-xs font-medium transition-colors select-none;
 
-  &--sm {
-    @apply h-6;
-
-    .subcat-icon {
-      @apply w-3 h-3;
-    }
-
-    .subcat-name {
-      @apply truncate max-w-[60px];
-    }
-  }
-
-  &--md {
-    @apply h-7;
-
-    .subcat-icon {
-      @apply w-3.5 h-3.5;
-    }
-
-    .subcat-name {
-      @apply truncate max-w-[80px];
-    }
-  }
-
-  &[data-checked="true"] {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
-
-    .subcat-count {
-      @apply text-primary-foreground/70;
-    }
-  }
-
-  &[data-checked="false"] {
-    @apply bg-muted hover:bg-muted/80 text-muted-foreground;
-
-    .subcat-count {
-      @apply text-muted-foreground/60;
-    }
-  }
-
   .subcat-icon {
     @apply shrink-0 object-contain;
   }
 
   .subcat-name {
-    /* 尺寸由 --sm / --md 变体控制 */
+    @apply truncate;
   }
 
   .subcat-count {
-    @apply tabular-nums shrink-0;
+    @apply text-[10px] tabular-nums shrink-0 opacity-70;
+  }
+}
+
+.subcat-btn--sm {
+  @apply h-6;
+
+  .subcat-icon {
+    @apply w-3 h-3;
+  }
+
+  .subcat-name {
+    @apply max-w-[60px];
+  }
+}
+
+.subcat-btn--md {
+  @apply h-7;
+
+  .subcat-icon {
+    @apply w-4 h-4;
+  }
+
+  .subcat-name {
+    @apply max-w-[80px];
+  }
+}
+
+.subcat-btn[data-checked="true"] {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+
+  .subcat-count {
+    @apply text-primary-foreground/70;
+  }
+}
+
+.subcat-btn[data-checked="false"] {
+  @apply bg-muted hover:bg-muted/80 text-muted-foreground;
+
+  .subcat-count {
+    @apply text-muted-foreground/60;
   }
 }
 
@@ -262,15 +227,33 @@
 /* ─── Popup 标点内容 ─── */
 
 .popup-content {
-  @apply min-w-48 max-w-64 flex flex-col gap-1;
+  @apply flex flex-col; /* 图片上，文字下 */
+}
+
+.popup-carousel {
+  @apply relative rounded-md overflow-hidden bg-muted/30;
+}
+
+.popup-carousel-img {
+  @apply w-full object-contain; /* 宽度撑满，高度自适应或限制 */
+  max-height: 280px;
+}
+
+/* ─── 信息区（图片下方） ─── */
+.popup-info {
+  @apply flex flex-col gap-0.5 p-1.5;
+}
+
+.popup-header {
+  @apply flex items-center gap-1.5 flex-wrap;
 }
 
 .popup-title {
-  @apply text-sm font-semibold;
+  @apply text-sm font-semibold leading-snug;
 }
 
 .popup-category {
-  @apply text-xs opacity-70;
+  @apply text-[10px] opacity-60 shrink-0;
 }
 
 .popup-description {
@@ -278,16 +261,7 @@
 }
 
 .popup-author {
-  @apply text-[10px] opacity-50 mt-1;
-}
-
-/* 指示图轮播 */
-.popup-carousel {
-  @apply relative mt-1.5 rounded-md overflow-hidden bg-muted/30;
-}
-
-.popup-carousel-img {
-  @apply w-full object-contain max-h-48;
+  @apply text-[10px] opacity-40;
 }
 
 .popup-carousel-btn {
@@ -387,8 +361,12 @@
 /* ─── Keyframes ─── */
 
 @keyframes map-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes map-overlay-flash {
@@ -410,5 +388,71 @@
 }
 
 @keyframes map-overlay-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── 图片灯箱（Lightbox） ─── */
+
+.lightbox-overlay {
+  @apply fixed inset-0 z-[10000] flex items-center justify-center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  animation: lightbox-fade-in 200ms ease-out;
+}
+
+.lightbox-container {
+  @apply relative flex items-center justify-center;
+  max-width: 75vw;
+  max-height: 72vh;
+}
+
+.lightbox-img {
+  @apply block rounded-lg;
+  max-width: 75vw;
+  max-height: 72vh;
+  object-fit: contain;
+  user-select: none;
+}
+
+.lightbox-close {
+  @apply absolute -top-10 right-0 w-8 h-8 flex items-center justify-center
+    rounded-full bg-white/15 text-white/80 text-lg
+    hover:bg-white/30 hover:text-white
+    transition-colors duration-150;
+  cursor: pointer;
+  border: none;
+}
+
+.lightbox-btn {
+  @apply absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full
+    bg-white/15 text-white flex items-center justify-center
+    text-2xl font-bold select-none
+    hover:bg-white/30
+    transition-colors duration-150;
+  cursor: pointer;
+  border: none;
+}
+
+.lightbox-prev {
+  left: -3.5rem;
+}
+
+.lightbox-next {
+  right: -3.5rem;
+}
+
+.lightbox-indicator {
+  @apply absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full
+    bg-black/60 text-xs text-white tabular-nums;
+}
+
+@keyframes lightbox-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

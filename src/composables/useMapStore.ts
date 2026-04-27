@@ -1,8 +1,16 @@
 import { create } from 'zustand';
 import type { MapLocation, MarkerGroup } from '../lib/map/types';
 import { MARKER_GROUPS, getCategoryIconUrl, CACHE_TTL } from '../lib/map/constants';
-import { cacheFetch, localPathToAssetUrl } from '../lib/cache';
+import { cacheFetch } from '../lib/cache';
 import { logger } from '../lib/logger';
+
+/** 视口边界 */
+export interface ViewportBounds {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}
 
 /** 遮罩层操作状态 */
 export type OverlayState =
@@ -20,13 +28,20 @@ interface MapState {
   error: string | null;
   /** 遮罩层状态 */
   overlay: OverlayState;
-  /** categoryId → 本地缓存 asset URL（图标走本地缓存） */
+  /** categoryId → 图标 URL（直接远程地址，cacheFetch 仅做后台预热） */
   iconUrlMap: Map<number, string>;
+  /** 当前视口边界（由 MapMarkers 监听地图事件写入） */
+  viewportBounds: ViewportBounds | null;
+  /** 折叠的分组 key 集合（空 = 全部展开） */
+  collapsedGroups: Set<string>;
 
   setLocations: (locs: MapLocation[]) => void;
+
+  /** 清除图标缓存，避免复用失效的 URL */
+  clearIconUrlMap: () => void;
   /** 批量预下载分类图标到本地缓存 */
   prefetchIcons: (categoryIds: number[]) => Promise<void>;
-  /** 获取分类图标的本地 URL（缓存命中返回本地路径，否则返回远程 URL） */
+  /** 获取分类图标 URL（优先缓存，否则降级到远程） */
   getIconUrl: (categoryId: number) => string;
   toggleCategory: (categoryId: number) => void;
   toggleGroup: (key: string) => void;
@@ -34,6 +49,14 @@ interface MapState {
   hideAllGroups: () => void;
   isGroupVisible: (key: string) => boolean;
   setOverlay: (state: OverlayState) => void;
+  /** 更新当前视口边界 */
+  setViewportBounds: (bounds: ViewportBounds) => void;
+  /** 切换分组折叠状态 */
+  toggleGroupCollapse: (key: string) => void;
+  /** 展开所有分组 */
+  expandAllGroups: () => void;
+  /** 折叠所有分组 */
+  collapseAllGroups: () => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -45,6 +68,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   error: null,
   overlay: { kind: 'idle' },
   iconUrlMap: new Map(),
+  viewportBounds: null,
+  collapsedGroups: new Set(),
 
   setLocations: (locs) => {
     logger.info("store", "setLocations", "entry", { locCount: locs.length });
@@ -62,7 +87,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       arr.push(loc);
     }
 
-    logger.info("store", "setLocations", "catCount", { distinctCats: catCountMap.size, catCounts: Object.fromEntries(catCountMap) });
+    logger.info("store", "setLocations", "catCount", { distinctCats: catCountMap.size });
 
     const groups: MarkerGroup[] = MARKER_GROUPS.map((def) => {
       const subCategories = def.categoryIds
@@ -80,42 +105,35 @@ export const useMapStore = create<MapState>((set, get) => ({
       };
     }).filter((g) => g.count > 0);
 
-    logger.info("store", "setLocations", "groups", {
-      groupCount: groups.length,
-      groups: groups.map((g) => ({ key: g.key, label: g.label, count: g.count, subCatCount: g.subCategories.length })),
-    });
-
     set({ locations: locs, groups, categoryIndex, visibleCategories: new Set() });
+  },
+
+  clearIconUrlMap: () => {
+    logger.info("store", "clearIconUrlMap", "call", {});
+    set({ iconUrlMap: new Map() });
   },
 
   prefetchIcons: async (categoryIds: number[]) => {
     logger.info("store", "prefetchIcons", "start", { count: categoryIds.length });
-    const newMap = new Map(get().iconUrlMap);
-    let hit = 0;
+    const newMap = new Map<number, string>();
     let miss = 0;
 
-    // 逐个下载（图标数量不多，~82 个，且并发由 Rust 端 Semaphore 控制）
     const tasks = categoryIds.map(async (cid) => {
-      // 已缓存则跳过
-      if (newMap.has(cid)) {
-        hit++;
-        return;
-      }
       try {
         const remoteUrl = getCategoryIconUrl(cid);
-        const localPath = await cacheFetch(remoteUrl, CACHE_TTL.assets);
-        newMap.set(cid, localPathToAssetUrl(localPath));
+        // 预下载到本地缓存（图层缓存为未来离线扩展，URL 始终用远程地址）
+        await cacheFetch(remoteUrl, CACHE_TTL.assets);
+        newMap.set(cid, remoteUrl);
         miss++;
       } catch (e) {
         logger.warn("store", "prefetchIcons", "fail", { cid, error: String(e) });
-        // 降级：保留远程 URL
         newMap.set(cid, getCategoryIconUrl(cid));
       }
     });
 
     await Promise.all(tasks);
     set({ iconUrlMap: newMap });
-    logger.info("store", "prefetchIcons", "done", { hit, miss, total: newMap.size });
+    logger.info("store", "prefetchIcons", "done", { miss, total: newMap.size });
   },
 
   getIconUrl: (categoryId: number) => {
@@ -128,19 +146,13 @@ export const useMapStore = create<MapState>((set, get) => ({
     if (next.has(categoryId)) next.delete(categoryId);
     else next.add(categoryId);
 
-    const catName = get().groups
-      .flatMap(g => g.subCategories)
-      .find(sc => sc.categoryId === categoryId);
-    const label = catName ? String(categoryId) : String(categoryId);
     set({
       visibleCategories: next,
-      overlay: { kind: 'filtering', message: action === 'added' ? `显示分类 #${label}` : `隐藏分类 #${label}` },
+      overlay: { kind: 'filtering', message: action === 'added' ? `显示分类 #${categoryId}` : `隐藏分类 #${categoryId}` },
     });
 
     setTimeout(() => {
-      if (get().overlay.kind === 'filtering') {
-        set({ overlay: { kind: 'idle' } });
-      }
+      if (get().overlay.kind === 'filtering') set({ overlay: { kind: 'idle' } });
     }, 300);
 
     logger.info("store", "toggleCategory", "update", { categoryId, action, total: next.size });
@@ -179,8 +191,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     setTimeout(() => {
       if (get().overlay.kind === 'filtering') set({ overlay: { kind: 'idle' } });
     }, 300);
-
-    logger.info("store", "toggleGroup", "update", { key, action, affectedCids: groupCids, total: next.size });
   },
 
   showAllGroups: () => {
@@ -188,7 +198,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     for (const g of get().groups) {
       for (const sc of g.subCategories) allCids.add(sc.categoryId);
     }
-    logger.info("store", "showAllGroups", "update", { total: allCids.size });
     set({ visibleCategories: allCids, overlay: { kind: 'filtering', message: '全部分类已显示' } });
     setTimeout(() => {
       if (get().overlay.kind === 'filtering') set({ overlay: { kind: 'idle' } });
@@ -196,7 +205,6 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   hideAllGroups: () => {
-    logger.info("store", "hideAllGroups", "update", {});
     set({ visibleCategories: new Set(), overlay: { kind: 'filtering', message: '已清空分类' } });
     setTimeout(() => {
       if (get().overlay.kind === 'filtering') set({ overlay: { kind: 'idle' } });
@@ -211,5 +219,25 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   setOverlay: (state) => {
     set({ overlay: state });
+  },
+
+  setViewportBounds: (bounds) => {
+    set({ viewportBounds: bounds });
+  },
+
+  toggleGroupCollapse: (key) => {
+    const next = new Set(get().collapsedGroups);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    set({ collapsedGroups: next });
+  },
+
+  expandAllGroups: () => {
+    set({ collapsedGroups: new Set() });
+  },
+
+  collapseAllGroups: () => {
+    const allKeys = new Set(get().groups.map((g) => g.key));
+    set({ collapsedGroups: allKeys });
   },
 }));

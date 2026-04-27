@@ -10,6 +10,7 @@ import {
 } from "@/components/SettingItems";
 import { Button } from "@/components/ui/button";
 import { cacheStats, cacheClear, cacheExportManifest, cacheImportManifest, formatBytes } from "@/lib/cache";
+import { useMapStore } from "@/composables/useMapStore";
 
 import type { SettingSelectItemItem } from "@/shared";
 
@@ -76,6 +77,7 @@ export default function Settings() {
     setCacheLoading(true);
     try {
       await cacheClear(true);
+      useMapStore.getState().clearIconUrlMap();
       success("已清除过期缓存");
       await loadCacheStats();
     } catch (e) {
@@ -89,6 +91,7 @@ export default function Settings() {
     setCacheLoading(true);
     try {
       await cacheClear(false);
+      useMapStore.getState().clearIconUrlMap();
       success("已清除全部缓存");
       await loadCacheStats();
     } catch (e) {

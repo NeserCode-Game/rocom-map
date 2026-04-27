@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import {
   ChevronDown,
   Package,
@@ -9,10 +8,11 @@ import {
   MapPin,
   ScrollText,
   HelpCircle,
-  Filter,
-  Search,
+  Zap,
   Check,
   X,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
 } from "lucide-react";
 import { useMapStore } from "../../composables/useMapStore";
 import { CATEGORY_NAMES } from "../../lib/map/constants";
@@ -49,13 +49,13 @@ const GROUP_ICONS: Record<
 export default function CategoryFilter() {
   const groups = useMapStore((s) => s.groups);
   const visibleCategories = useMapStore((s) => s.visibleCategories);
+  const collapsedGroups = useMapStore((s) => s.collapsedGroups);
   const toggleCategory = useMapStore((s) => s.toggleCategory);
   const toggleGroup = useMapStore((s) => s.toggleGroup);
+  const toggleGroupCollapse = useMapStore((s) => s.toggleGroupCollapse);
+  const expandAllGroups = useMapStore((s) => s.expandAllGroups);
+  const collapseAllGroups = useMapStore((s) => s.collapseAllGroups);
   const getIconUrl = useMapStore((s) => s.getIconUrl);
-
-  // 过滤 Popover 状态
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const allCids = new Set(
     groups.flatMap((g) => g.subCategories.map((sc) => sc.categoryId)),
@@ -79,7 +79,7 @@ export default function CategoryFilter() {
     return checked > 0 && checked < g.subCategories.length;
   }
 
-  // 全选 / 全不选 / 反选
+  // 全选 / 全不选
   function handleSelectAll() {
     const all = [...allCids];
     useMapStore.setState({ visibleCategories: new Set(all) });
@@ -88,42 +88,6 @@ export default function CategoryFilter() {
   function handleDeselectAll() {
     useMapStore.setState({ visibleCategories: new Set() });
   }
-
-  function handleInvert() {
-    const next = new Set<number>();
-    for (const cid of allCids) {
-      if (!visibleCategories.has(cid)) next.add(cid);
-    }
-    useMapStore.setState({ visibleCategories: next });
-  }
-
-  // 搜索过滤后的子分类
-  const filteredSubCategories = useMemo(() => {
-    if (!searchQuery.trim()) return null;
-    const query = searchQuery.toLowerCase();
-    const result: Array<{
-      groupId: string;
-      groupLabel: string;
-      categoryId: number;
-      name: string;
-      count: number;
-    }> = [];
-    for (const group of groups) {
-      for (const sc of group.subCategories) {
-        const name = CATEGORY_NAMES[sc.categoryId] ?? sc.categoryId.toString();
-        if (name.toLowerCase().includes(query)) {
-          result.push({
-            groupId: group.key,
-            groupLabel: group.label,
-            categoryId: sc.categoryId,
-            name,
-            count: sc.count,
-          });
-        }
-      }
-    }
-    return result;
-  }, [groups, searchQuery]);
 
   if (groups.length === 0) return null;
 
@@ -137,13 +101,13 @@ export default function CategoryFilter() {
         </span>
       </div>
 
-      {/* 过滤按钮 + 设置 */}
+      {/* 快捷操作 + 设置 */}
       <div className="category-toolbar">
-        <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+        <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="toolbar-filter-btn">
-              <Filter className="filter-icon" />
-              <span className="filter-label">过滤</span>
+            <Button variant="outline" size="sm" className="toolbar-action-btn">
+              <Zap className="toolbar-action-icon" />
+              <span className="toolbar-action-label">快捷操作</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent
@@ -152,108 +116,77 @@ export default function CategoryFilter() {
             sideOffset={8}
             className="config-popover-content"
           >
-            {/* 搜索框 */}
-            <div className="filter-search">
-              <Search className="search-icon" />
-              <input
-                type="text"
-                placeholder="搜索分类名称..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-            </div>
-
-            <Separator className="my-2" />
-
-            {/* 快捷操作 */}
-            <div className="filter-actions">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleSelectAll}
-                className="filter-action-btn"
-              >
-                <Check className="action-icon" />
-                全选
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleDeselectAll}
-                className="filter-action-btn"
-              >
-                <X className="action-icon" />
-                全不选
-              </Button>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleInvert}
-              className="filter-invert-btn"
-            >
-              反选
-            </Button>
-
-            <Separator className="my-2" />
-
-            {/* 搜索结果 */}
-            {filteredSubCategories ? (
-              <div className="filter-results">
-                {filteredSubCategories.length === 0 ? (
-                  <p className="filter-empty">
-                    无匹配结果
-                  </p>
-                ) : (
-                  <div className="filter-list">
-                    {filteredSubCategories.map((sc) => {
-                      const checked = visibleCategories.has(sc.categoryId);
-                      return (
-                        <button
-                          key={sc.categoryId}
-                          onClick={() => toggleCategory(sc.categoryId)}
-                          className={`subcat-btn subcat-btn--sm`}
-                          data-checked={checked}
-                          title={`${sc.groupLabel} - ${sc.name}`}
-                        >
-                          <img
-                            src={getIconUrl(sc.categoryId)}
-                            alt=""
-                            className="subcat-icon"
-                          />
-                          <span className="subcat-name">
-                            {sc.name}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+            {/* 选择操作 */}
+            <div className="quick-actions-section">
+              <p className="config-label">选择</p>
+              <div className="quick-actions-row">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSelectAll}
+                  className="config-action-btn"
+                >
+                  <Check className="config-action-icon" />
+                  全选
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDeselectAll}
+                  className="config-action-btn"
+                >
+                  <X className="config-action-icon" />
+                  全不选
+                </Button>
               </div>
-            ) : (
-              <p className="filter-empty">
-                输入关键词搜索分类
-              </p>
-            )}
+            </div>
+
+            <Separator className="my-2" />
+
+            {/* 折叠操作 */}
+            <div className="quick-actions-section">
+              <p className="config-label">折叠</p>
+              <div className="quick-actions-row">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={expandAllGroups}
+                  className="config-action-btn"
+                >
+                  <ArrowDownWideNarrow className="config-action-icon" />
+                  展开全部
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={collapseAllGroups}
+                  className="config-action-btn"
+                >
+                  <ArrowUpNarrowWide className="config-action-icon" />
+                  折叠全部
+                </Button>
+              </div>
+            </div>
           </PopoverContent>
         </Popover>
         <ConfigPanel />
       </div>
 
-      {/* 分组列表：默认全部展开 */}
+      {/* 分组列表：受控折叠状态 */}
       <ScrollArea className="category-scroll-area">
         <div className="category-scroll-inner">
           {groups.map((group) => {
             const allChecked = isGroupAllChecked(group.key);
             const partialChecked = isGroupPartialChecked(group.key);
             const IconComponent = GROUP_ICONS[group.key];
+            const isCollapsed = collapsedGroups.has(group.key);
 
             return (
               <Collapsible
                 key={group.key}
                 className="group-collapsible"
-                defaultOpen={true}
+                open={!isCollapsed}
+                onOpenChange={() => toggleGroupCollapse(group.key)}
               >
                 {/* 分组行 */}
                 <CollapsibleTrigger className="group-trigger">
