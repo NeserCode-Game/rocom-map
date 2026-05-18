@@ -4,6 +4,9 @@
 @import "./style/layout.css";
 @import "./style/framework.css";
 @import "./style/map.css";
+@import "./style/navigator.css";
+@import "./style/selector.css";
+@import "./style/navisland.css";
 
 @custom-variant dark (&:is(.dark *));
 

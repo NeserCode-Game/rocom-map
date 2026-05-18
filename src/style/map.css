@@ -1,222 +1,354 @@
-/* ─── 配置面板 Popover ─── */
-
-.config-popover-content {
-  @apply w-72 gap-0;
-}
-
-.config-section {
-  @apply flex flex-col gap-1.5;
-}
-
-.config-label {
-  @apply text-xs font-medium text-muted-foreground;
-}
-
-.config-input {
-  @apply flex-1 h-8 px-3 rounded-md border border-input bg-transparent text-sm
-    outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50
-    placeholder:text-muted-foreground;
-}
-
-.config-actions {
-  @apply flex flex-row gap-1.5;
-}
-
-.config-action-btn {
-  @apply h-7 gap-1.5 justify-center flex-1;
-
-  .config-action-icon {
-    @apply w-3.5 h-3.5;
-  }
-}
-
-.config-trigger-btn {
-  @apply h-7 w-7 shrink-0;
-}
-
-.config-trigger-icon {
-  @apply w-3.5 h-3.5;
-}
-
-.config-select-trigger {
-  @apply h-8 text-xs;
-}
-
-.config-save-row {
-  @apply flex gap-2;
-}
-
-.config-save-btn {
-  @apply h-8 px-2 shrink-0;
-}
-
 /* ─── 分类侧栏面板 ─── */
 
 .category-panel {
-  @apply w-64 shrink-0 border-r bg-background flex flex-col overflow-hidden;
+  @apply w-60 shrink-0 border-r bg-background flex flex-col overflow-hidden;
 }
 
 .category-panel-header {
-  @apply px-3 py-3 border-b flex items-center justify-between;
+  @apply px-2.5 py-2 border-b flex items-center justify-between shrink-0;
 
   &-title {
     @apply font-semibold text-sm;
   }
-
-  &-count {
-    @apply text-xs text-muted-foreground;
-  }
 }
 
-/* 快捷操作 + 配置操作栏 */
-.category-toolbar {
-  @apply px-3 py-2 border-b shrink-0 flex items-center gap-2;
+/* ─── 左侧面板 ─── */
 
-  .toolbar-action-btn {
-    @apply h-7 gap-1.5 px-2;
-
-    .toolbar-action-icon {
-      @apply w-3.5 h-3.5;
-    }
-
-    .toolbar-action-label {
-      @apply text-xs;
-    }
-  }
+.left-panel {
+  @apply shrink-0 border-r bg-background flex flex-col overflow-hidden w-[18.75rem];
+}
+.left-panel-tab {
+  @apply flex items-center gap-2 px-2.5 h-9 w-full hover:bg-muted/50 text-left shrink-0;
+}
+.left-panel-tab--actions {
+  @apply justify-between;
+}
+.left-panel-tab-icon {
+  @apply size-3.5;
+}
+.left-panel-tab-label {
+  @apply text-xs font-medium;
+}
+.left-panel-end {
+  @apply flex items-center gap-0.5 ml-auto;
+}
+.left-panel-chevron {
+  @apply size-3.5 transition-transform shrink-0;
+}
+.left-panel-chevron-open {
+  @apply rotate-180;
+}
+.left-panel-actions {
+  @apply flex items-center gap-0.5;
+}
+.left-panel-action-btn {
+  @apply size-6;
+}
+.left-panel-action-icon {
+  @apply size-3;
+}
+.left-panel-action-icon--pulse {
+  @apply animate-pulse;
+}
+.left-panel-placeholder {
+  @apply text-xs text-muted-foreground px-3 py-3 block;
+}
+.left-panel-body {
+  @apply flex-1 flex flex-col min-h-0 w-full;
 }
 
-/* 快捷操作 Popover 区段 */
-.quick-actions-section {
-  @apply flex flex-col gap-1.5;
+/* ─── 分类筛选 ─── */
+
+.filter-root {
+  @apply flex flex-col min-h-0;
+}
+.filter-toolbar {
+  @apply flex items-center justify-between px-2.5 h-9 shrink-0;
+}
+.filter-toolbar-label {
+  @apply text-[10px] text-muted-foreground;
+}
+.filter-toolbar-actions {
+  @apply flex items-center gap-0.5;
+}
+.filter-btn {
+  @apply size-6;
+}
+.filter-btn-icon {
+  @apply size-3;
+}
+.filter-scroll {
+  @apply h-[28.6rem];
 }
 
-.quick-actions-row {
-  @apply flex gap-1.5;
-}
-
-
-
-
-
-/* 子分类按钮（通用，Popover 内和侧栏共用） */
-.subcat-btn {
-  @apply inline-flex items-center gap-1.5 px-2 rounded-full
-    text-xs font-medium transition-colors select-none;
-
-  .subcat-icon {
-    @apply shrink-0 object-contain;
-  }
-
-  .subcat-name {
-    @apply truncate;
-  }
-
-  .subcat-count {
-    @apply text-[10px] tabular-nums shrink-0 opacity-70;
-  }
-}
-
-.subcat-btn--sm {
-  @apply h-6;
-
-  .subcat-icon {
-    @apply w-3 h-3;
-  }
-
-  .subcat-name {
-    @apply max-w-[60px];
-  }
-}
-
-.subcat-btn--md {
-  @apply h-7;
-
-  .subcat-icon {
-    @apply w-4 h-4;
-  }
-
-  .subcat-name {
-    @apply max-w-[80px];
-  }
-}
-
-.subcat-btn[data-checked="true"] {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90;
-
-  .subcat-count {
-    @apply text-primary-foreground/70;
-  }
-}
-
-.subcat-btn[data-checked="false"] {
-  @apply bg-muted hover:bg-muted/80 text-muted-foreground;
-
-  .subcat-count {
-    @apply text-muted-foreground/60;
-  }
-}
-
-/* ScrollArea */
-.category-scroll-area {
-  @apply flex-1;
-}
-
-.category-scroll-inner {
-  @apply py-1 h-[calc(100vh-11.75rem)];
-}
-
-/* 分组折叠面板 */
 .group-collapsible {
   @apply border-b last:border-b-0;
 }
-
 .group-trigger {
-  @apply flex items-center gap-2 px-3 py-2.5 w-full
-    cursor-pointer hover:bg-muted/50 select-none
-    data-[state=open]:bg-muted/30;
-
-  .group-checkbox {
-    @apply shrink-0;
-  }
-
-  .group-icon {
-    @apply w-4 h-4 shrink-0 text-muted-foreground;
-  }
-
-  .group-label {
-    @apply flex-1 font-medium text-sm text-left truncate;
-  }
-
-  .group-count {
-    @apply text-muted-foreground text-xs tabular-nums shrink-0;
-  }
-
-  .group-chevron {
-    @apply w-3.5 h-3.5 shrink-0 text-muted-foreground/60
-      transition-transform data-[state=open]:rotate-180;
-  }
+  @apply flex items-center gap-2 px-3 py-2.5 w-full cursor-pointer hover:bg-muted/50 select-none data-[state=open]:bg-muted/30;
 }
-
+.group-checkbox {
+  @apply shrink-0 cursor-pointer accent-primary dark:invert;
+}
+.group-icon {
+  @apply w-4 h-4 shrink-0 text-muted-foreground;
+}
+.group-label {
+  @apply flex-1 font-medium text-sm text-left truncate;
+}
+.group-count {
+  @apply text-muted-foreground text-xs tabular-nums shrink-0;
+}
+.group-chevron {
+  @apply w-3.5 h-3.5 shrink-0 text-muted-foreground/60 transition-transform data-[state=open]:rotate-180;
+}
 .group-content {
   @apply pb-2 pt-1 px-3;
+}
+.group-subcats {
+  @apply flex flex-wrap gap-1.5;
+}
 
-  .group-subcats {
-    @apply flex flex-wrap gap-1.5;
+.subcat-btn {
+  @apply inline-flex items-center gap-1.5 px-2 rounded-full text-xs font-medium transition-colors select-none;
+}
+.subcat-icon {
+  @apply shrink-0 object-contain;
+}
+.subcat-name {
+  @apply truncate;
+}
+.subcat-count {
+  @apply text-[10px] tabular-nums shrink-0 opacity-70;
+}
+.subcat-btn--md {
+  @apply h-7;
+}
+.subcat-btn--md .subcat-icon {
+  @apply w-4 h-4;
+}
+.subcat-btn--md .subcat-name {
+  @apply max-w-[80px];
+}
+.subcat-btn[data-checked="true"] {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+.subcat-btn[data-checked="true"] .subcat-count {
+  @apply text-primary-foreground/70;
+}
+.subcat-btn[data-checked="false"] {
+  @apply bg-muted hover:bg-muted/80 text-muted-foreground;
+}
+.subcat-btn[data-checked="false"] .subcat-count {
+  @apply text-muted-foreground/60;
+}
+
+/* ─── 追踪面板 ─── */
+
+.track-panel {
+  @apply flex flex-col h-full overflow-hidden w-full;
+}
+.track-scroll {
+  @apply h-[28.6rem] w-full px-3;
+}
+.track-info {
+  @apply flex items-center justify-between;
+}
+.track-pos {
+  @apply flex items-center gap-2;
+}
+.track-data {
+  @apply flex flex-col gap-0.5 mt-0.5;
+}
+.track-data-row {
+  @apply flex items-center;
+}
+.track-data-label {
+  @apply text-[10px] text-muted-foreground w-8;
+}
+.track-compare {
+  @apply flex gap-1.5 mt-1.5;
+}
+.track-compare-col {
+  @apply flex flex-col items-center gap-0.5 flex-1 min-w-0;
+}
+.track-compare-img {
+  @apply w-fit rounded border object-contain max-h-20;
+  image-rendering: pixelated;
+}
+.track-settings {
+  @apply flex flex-col gap-1 mt-2 pt-2 border-t;
+}
+.track-settings-row {
+  @apply flex items-center gap-1;
+
+  &.position {
+    @apply w-full justify-end;
   }
+}
+.track-select {
+  @apply flex-1 h-7 text-[11px] w-0 min-w-0;
+}
+.track-select-value {
+  @apply truncate;
+}
+.track-log {
+  @apply flex flex-col gap-0.5 mt-2 pt-2 border-t;
+}
+.track-log-item {
+  @apply flex items-center gap-1.5 cursor-pointer hover:bg-muted/50 py-0.5 px-1 rounded text-left border-none bg-transparent w-full;
+}
+.track-log-dot {
+  @apply w-1.5 h-1.5 rounded-full shrink-0;
+}
+.track-log-dot-err {
+  @apply bg-destructive;
+}
+.track-log-dot-warn {
+  @apply bg-yellow-500;
+}
+.track-log-dot-info {
+  @apply bg-emerald-500;
+}
+
+.track-empty {
+  @apply text-[11px] text-muted-foreground;
+}
+.track-dim-text {
+  @apply text-[10px] opacity-50;
+}
+.track-coord-text {
+  @apply text-[10px] text-muted-foreground font-mono;
+}
+.track-compare-label {
+  @apply text-[10px] text-muted-foreground;
+}
+.track-log-text {
+  @apply text-[10px] truncate;
+}
+.track-error {
+  @apply text-[10px] text-destructive mt-1;
+}
+
+.track-btn-calibrate {
+  @apply h-6 text-[10px] w-full gap-1 mt-1;
+}
+.track-btn-icon-sm {
+  @apply size-5;
+}
+.track-icon-sm {
+  @apply size-3;
+}
+
+.track-badge {
+  @apply text-[10px] h-4 px-1;
+}
+.track-stat-label {
+  @apply text-[10px] font-medium text-muted-foreground uppercase tracking-wide;
+}
+.track-stat-val {
+  @apply text-xs;
+}
+
+.track-popover-edit {
+  @apply w-40 p-2;
+}
+.track-popover-body {
+  @apply flex flex-col gap-1;
+}
+.track-field {
+  @apply flex items-center justify-between;
+}
+.track-field-label {
+  @apply text-[10px] text-muted-foreground w-3;
+}
+.track-field-input {
+  @apply w-16 h-6 px-1 rounded border border-input bg-transparent text-[10px] outline-none;
+}
+
+.track-popover-actions {
+  @apply flex gap-1 pt-1 mt-1 border-t;
+}
+.track-popover-cancel {
+  @apply text-[10px] h-6;
+}
+.track-popover-ok {
+  @apply text-[10px] h-6;
+}
+
+/* ─── 配置面板 ─── */
+
+.config-popover-content {
+  @apply w-72 gap-0;
+}
+.config-section {
+  @apply flex flex-col gap-1.5;
+}
+.config-label {
+  @apply text-xs font-medium text-muted-foreground;
+}
+.config-input {
+  @apply flex-1 h-8 px-3 rounded-md border border-input bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 placeholder:text-muted-foreground;
+}
+.config-actions {
+  @apply flex flex-row gap-1.5;
+}
+.config-action-btn {
+  @apply h-7 gap-1.5 justify-center flex-1;
+}
+.config-action-icon {
+  @apply w-3.5 h-3.5;
+}
+.config-trigger-btn {
+  @apply h-7 w-7 shrink-0;
+}
+.config-trigger-icon {
+  @apply w-3.5 h-3.5;
+}
+.config-select-trigger {
+  @apply h-8 text-xs;
+}
+.config-save-row {
+  @apply flex gap-2;
+}
+.config-save-btn {
+  @apply h-8 px-2 shrink-0;
+}
+.config-sep {
+  @apply my-2;
 }
 
 /* ─── 地图组件 ─── */
 
 .view-home {
   @apply w-full h-full flex;
+  padding: 0 !important;
 }
-
 .main-container {
   @apply flex h-full w-full;
 }
 
+.left-panel-section {
+  @apply flex flex-col;
+}
+.left-panel-tab-body {
+  @apply px-3 py-3;
+}
+
+.map-wrapper {
+  @apply flex-1 flex flex-col overflow-hidden;
+}
 .map-container {
   @apply flex-1 relative overflow-hidden;
+}
+.map-bottom-info {
+  @apply shrink-0 flex items-center justify-between px-3 h-16 border-t text-[11px];
+}
+.map-info-left {
+  @apply text-muted-foreground;
+}
+.map-info-right {
+  @apply opacity-40 text-[10px];
 }
 
 .map-leaflet {
@@ -224,138 +356,207 @@
   height: var(--map-height, 100%);
 }
 
-/* ─── Popup 标点内容 ─── */
+/* ─── 弹出层 ─── */
 
 .popup-content {
-  @apply flex flex-col; /* 图片上，文字下 */
+  @apply flex flex-col min-w-56 max-w-80;
 }
-
 .popup-carousel {
-  @apply relative rounded-md overflow-hidden bg-muted/30;
+  @apply relative overflow-hidden bg-muted/30 rounded-t-lg -mx-px -mt-px;
 }
-
 .popup-carousel-img {
-  @apply w-full object-contain; /* 宽度撑满，高度自适应或限制 */
-  max-height: 280px;
+  @apply w-full object-cover max-h-52 cursor-pointer;
 }
-
-/* ─── 信息区（图片下方） ─── */
 .popup-info {
-  @apply flex flex-col gap-0.5 p-1.5;
+  @apply flex flex-col gap-0.5 px-2 py-2;
 }
-
 .popup-header {
   @apply flex items-center gap-1.5 flex-wrap;
 }
-
 .popup-title {
   @apply text-sm font-semibold leading-snug;
 }
-
 .popup-category {
   @apply text-[10px] opacity-60 shrink-0;
 }
-
 .popup-description {
   @apply text-xs opacity-60 leading-relaxed;
 }
-
 .popup-author {
   @apply text-[10px] opacity-40;
 }
+.popup-actions {
+  @apply flex gap-1 mt-1 pt-1 border-t;
+}
+.popup-action-btn {
+  @apply flex items-center gap-1 px-2 py-1 rounded text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer border-none bg-transparent;
+}
+.popup-action-icon {
+  @apply size-3.5;
+}
+.popup-action-label {
+  @apply text-[10px];
+}
 
 .popup-carousel-btn {
-  @apply absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full
-    bg-black/40 text-white flex items-center justify-center
-    text-sm font-bold select-none cursor-pointer;
+  @apply absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center text-sm font-bold select-none cursor-pointer;
   opacity: 0;
   transition: opacity 150ms;
 }
-
 .popup-carousel:hover .popup-carousel-btn {
   opacity: 1;
 }
-
 .popup-carousel-prev {
-  left: 4px;
+  @apply left-1;
 }
-
 .popup-carousel-next {
-  right: 4px;
+  @apply right-1;
 }
-
 .popup-carousel-indicator {
-  @apply absolute bottom-1 right-1.5 px-1.5 py-0.5 rounded
-    bg-black/50 text-[10px] text-white tabular-nums;
+  @apply absolute bottom-1 right-1.5 px-1.5 py-0.5 rounded bg-black/50 text-[10px] text-white tabular-nums;
 }
 
-/* ─── 地图玻璃遮罩层 ─── */
+.dimmed-marker-icon {
+  @apply w-6 h-6 opacity-35;
+}
+
+.target-marker-wrap {
+  @apply relative flex items-center justify-center;
+  animation: target-pulse 1s ease-in-out infinite;
+}
+.target-marker-icon {
+  @apply w-6 h-6;
+  image-rendering: crisp-edges;
+}
+@keyframes target-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 3px white);
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 6px white);
+  }
+}
+
+.player-marker-dot {
+  @apply w-3 h-3 rounded-full bg-yellow-400 border-2 border-white;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+  animation: player-pulse 1.5s ease-in-out infinite;
+}
+.target-marker-dot {
+  @apply w-4 h-4 rounded-full bg-white border-2 border-sky-500;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* ─── 定位按钮 ─── */
+.map-locate {
+  @apply absolute left-2 bottom-8 z-[1000];
+}
+.map-locate-btn {
+  @apply w-8 h-8 flex items-center justify-center rounded bg-white/90 dark:bg-neutral-800/90 shadow border cursor-pointer text-foreground hover:bg-white;
+}
+.map-locate-btn--active {
+  @apply text-sky-500 border-sky-500;
+}
+@keyframes player-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+@keyframes player-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* ─── 玻璃遮罩 ─── */
 
 .map-overlay {
-  @apply absolute inset-0 z-1000 flex items-center justify-center
-    pointer-events-none select-none;
+  @apply absolute inset-0 z-1000 flex items-center justify-center pointer-events-none select-none;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(1px);
   animation: map-overlay-in 200ms ease-out;
-
-  &--loading {
-    background: rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(3px);
-    pointer-events: auto;
-  }
-
-  &--filtering {
-    animation: map-overlay-flash 300ms ease-out forwards;
-  }
 }
-
+.map-overlay--loading {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(3px);
+  pointer-events: auto;
+}
+.map-overlay--filtering {
+  animation: map-overlay-flash 300ms ease-out forwards;
+}
 .map-overlay-content {
-  @apply flex items-center gap-2.5 px-5 py-3 rounded-xl
-    bg-white/85 dark:bg-neutral-900/85
-    shadow-[0_2px_12px_rgba(0,0,0,0.12)]
-    backdrop-blur-sm;
+  @apply flex items-center gap-2.5 px-5 py-3 rounded-xl bg-white/85 dark:bg-neutral-900/85 shadow-[0_2px_12px_rgba(0,0,0,0.12)] backdrop-blur-sm;
 }
-
 .map-overlay-text {
   @apply text-sm font-medium text-foreground/80;
 }
-
 .map-overlay-spinner {
-  @apply w-4 h-4 border-2 border-muted-foreground/30 border-t-foreground/70
-    rounded-full shrink-0;
+  @apply w-4 h-4 border-2 border-muted-foreground/30 border-t-foreground/70 rounded-full shrink-0;
   animation: map-overlay-spin 0.8s linear infinite;
 }
 
-/* ─── 分类图标 ─── */
-
-.category-icon {
-  image-rendering: crisp-edges;
-}
-
-/* ─── 地图底部状态栏 ─── */
+/* ─── 地图状态栏 ─── */
 
 .map-status-bar {
-  @apply absolute bottom-0 left-0 right-0 z-[1000] flex items-center
-    px-3 py-1 text-[11px] select-none;
+  @apply absolute bottom-0 left-0 right-0 z-[1000] flex items-center px-3 py-1 text-[11px] select-none;
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(6px);
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
-
 .map-status-item {
   @apply text-muted-foreground whitespace-nowrap;
 }
-
 .map-status-separator {
   @apply mx-1.5 text-muted-foreground/40;
 }
-
 .map-status-spacer {
   @apply flex-1;
 }
-
 .map-status-version {
   @apply opacity-50;
+}
+
+/* ─── 图片灯箱 ─── */
+
+.lightbox-overlay {
+  @apply fixed inset-0 z-[10000] flex items-center justify-center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  animation: lightbox-fade-in 200ms ease-out;
+}
+.lightbox-container {
+  @apply relative flex items-center justify-center;
+  max-width: 75vw;
+  max-height: 72vh;
+}
+.lightbox-img {
+  @apply block rounded-lg max-w-[75vw] max-h-[72vh] object-contain select-none;
+}
+.lightbox-close {
+  @apply absolute -top-10 right-0 w-8 h-8 flex items-center justify-center rounded-full bg-white/15 text-white/80 text-lg hover:bg-white/30 hover:text-white transition-colors duration-150 cursor-pointer border-none;
+}
+.lightbox-btn {
+  @apply absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center text-2xl font-bold select-none hover:bg-white/30 transition-colors duration-150 cursor-pointer border-none;
+}
+.lightbox-prev {
+  @apply -left-14;
+}
+.lightbox-next {
+  @apply -right-14;
+}
+.lightbox-indicator {
+  @apply absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 text-xs text-white tabular-nums;
 }
 
 /* ─── Keyframes ─── */
@@ -368,7 +569,6 @@
     opacity: 1;
   }
 }
-
 @keyframes map-overlay-flash {
   0% {
     opacity: 0;
@@ -386,68 +586,11 @@
     backdrop-filter: blur(0px);
   }
 }
-
 @keyframes map-overlay-spin {
   to {
     transform: rotate(360deg);
   }
 }
-
-/* ─── 图片灯箱（Lightbox） ─── */
-
-.lightbox-overlay {
-  @apply fixed inset-0 z-[10000] flex items-center justify-center;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
-  animation: lightbox-fade-in 200ms ease-out;
-}
-
-.lightbox-container {
-  @apply relative flex items-center justify-center;
-  max-width: 75vw;
-  max-height: 72vh;
-}
-
-.lightbox-img {
-  @apply block rounded-lg;
-  max-width: 75vw;
-  max-height: 72vh;
-  object-fit: contain;
-  user-select: none;
-}
-
-.lightbox-close {
-  @apply absolute -top-10 right-0 w-8 h-8 flex items-center justify-center
-    rounded-full bg-white/15 text-white/80 text-lg
-    hover:bg-white/30 hover:text-white
-    transition-colors duration-150;
-  cursor: pointer;
-  border: none;
-}
-
-.lightbox-btn {
-  @apply absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full
-    bg-white/15 text-white flex items-center justify-center
-    text-2xl font-bold select-none
-    hover:bg-white/30
-    transition-colors duration-150;
-  cursor: pointer;
-  border: none;
-}
-
-.lightbox-prev {
-  left: -3.5rem;
-}
-
-.lightbox-next {
-  right: -3.5rem;
-}
-
-.lightbox-indicator {
-  @apply absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full
-    bg-black/60 text-xs text-white tabular-nums;
-}
-
 @keyframes lightbox-fade-in {
   from {
     opacity: 0;

@@ -1,0 +1,61 @@
+/* ─── 灵动岛导航 ─── */
+
+html.navisland-window,
+html.navisland-window body,
+html.navisland-window #root {
+  @apply m-0 p-0 w-screen h-screen overflow-hidden bg-transparent;
+}
+
+.navisland-root {
+  @apply w-full h-full flex border border-white/10 cursor-move select-none backdrop-blur-xl;
+  background: rgb(0 0 0 / 0.55);
+}
+
+.navisland-left {
+  @apply flex items-center px-3 py-1.5 gap-2;
+  width: 65%;
+}
+
+.navisland-arrow {
+  @apply w-7 h-7 flex items-center justify-center shrink-0;
+  transition: transform 0.3s ease;
+}
+
+.navisland-info {
+  @apply flex flex-col gap-px min-w-0;
+}
+
+.navisland-distance {
+  @apply text-base font-bold leading-tight text-emerald-400;
+}
+
+.navisland-name {
+  @apply text-[11px] text-white/75 truncate;
+}
+
+.navisland-empty {
+  @apply text-[13px] text-white/35;
+}
+
+.navisland-ref-wrap {
+  @apply relative flex items-center justify-center;
+  width: 35%;
+}
+
+.navisland-ref-img {
+  @apply max-w-full max-h-full object-contain opacity-50;
+}
+
+.navisland-player-dot {
+  @apply absolute w-1 h-1 rounded-full bg-emerald-400 left-1/2 top-1/2 ring-1 ring-white/60;
+  transform: translate(-50%, -50%);
+}
+
+.navisland-target-dot {
+  @apply absolute w-2 h-2 rounded-full bg-white ring-1 ring-sky-500/60;
+  transform: translate(-50%, -50%);
+}
+
+.navisland-ref-img {
+  @apply w-full max-w-full max-h-full object-cover;
+}

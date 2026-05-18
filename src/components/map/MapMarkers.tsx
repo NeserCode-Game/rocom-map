@@ -5,7 +5,9 @@ import L from "leaflet";
 import { useMapStore } from "../../composables/useMapStore";
 import type { ViewportBounds } from "../../composables/useMapStore";
 import { CATEGORY_NAMES } from "../../lib/map/constants";
+import { pixelToLatLng, latLngToPixel } from "../../lib/map/coords";
 import type { MapLocation } from "../../lib/map/types";
+import { CheckCheck, Undo2 } from "lucide-react";
 
 /* icon 缓存：同一 categoryId 只创建一个 L.Icon 实例 */
 const iconCache = new Map<string, L.Icon>();
@@ -154,15 +156,41 @@ function ImageCarousel({ images }: { images: string[] }) {
 const LocationMarker = memo(function LocationMarker({
   loc,
   iconUrl,
+  completed,
+  isTarget,
 }: {
   loc: MapLocation;
   iconUrl: string;
+  completed: boolean;
+  isTarget: boolean;
 }) {
-  const icon = useMemo(() => getIconByUrl(iconUrl), [iconUrl]);
+  const baseIcon = useMemo(() => getIconByUrl(iconUrl), [iconUrl]);
   const catName = CATEGORY_NAMES[loc.category_id] ?? "";
+  const toggleCompleted = useMapStore((s) => s.toggleCompleted);
+
+  // 目标标点用带动画的图标
+  const icon = useMemo(() => {
+    if (completed) {
+      return L.divIcon({
+        className: "",
+        html: baseIcon.options.iconUrl ? `<img src="${baseIcon.options.iconUrl}" class="dimmed-marker-icon" />` : "",
+        iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -14],
+      });
+    }
+    if (isTarget) {
+      return L.divIcon({
+        className: "",
+        html: baseIcon.options.iconUrl
+          ? `<div class="target-marker-wrap"><img src="${baseIcon.options.iconUrl}" class="target-marker-icon" /></div>`
+          : "",
+        iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -18],
+      });
+    }
+    return baseIcon;
+  }, [completed, isTarget, baseIcon]);
 
   return (
-    <Marker position={[loc.latitude, loc.longitude]} icon={icon}>
+    <Marker position={[loc.latitude, loc.longitude]} icon={icon} zIndexOffset={isTarget ? 500 : 0}>
       <Popup>
         <div className="popup-content">
           {loc.images && loc.images.length > 0 && (
@@ -176,9 +204,20 @@ const LocationMarker = memo(function LocationMarker({
             {loc.description && (
               <p className="popup-description">{loc.description}</p>
             )}
-            {loc.author && (
-              <p className="popup-author">贡献者: {loc.author.nickName}</p>
-            )}
+            <div className="popup-actions">
+              <button
+                className="popup-action-btn"
+                onClick={() => toggleCompleted(loc.id)}
+                title={completed ? "取消标记" : "标记完成"}
+              >
+                {completed ? (
+                  <Undo2 className="popup-action-icon" />
+                ) : (
+                  <CheckCheck className="popup-action-icon" />
+                )}
+                <span className="popup-action-label">{completed ? "恢复" : "完成"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </Popup>
@@ -232,12 +271,47 @@ function MapEventListener() {
 /** 视口内标点最大数量（超出时随机采样） */
 const MAX_VISIBLE = 500;
 
+/** 玩家位置标记 */
+const playerIcon = L.divIcon({
+  className: "",
+  html: '<div class="player-marker-dot"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
+
+function PlayerMarker() {
+  const tracked = useMapStore((s) => s.trackedPosition);
+  if (!tracked) return null;
+  const pos = pixelToLatLng(tracked.x, tracked.y);
+  return <Marker position={pos} icon={playerIcon} zIndexOffset={1000} />;
+}
+
 /** 核心导出组件 */
 export default function MapMarkers() {
   const categoryIndex = useMapStore((s) => s.categoryIndex);
   const visibleCategories = useMapStore((s) => s.visibleCategories);
   const getIconUrl = useMapStore((s) => s.getIconUrl);
   const viewportBounds = useMapStore((s) => s.viewportBounds);
+  const completedLocations = useMapStore((s) => s.completedLocations);
+  const tracked = useMapStore((s) => s.trackedPosition);
+
+  /** 最近未完成目标 ID */
+  const targetId = useMemo(() => {
+    if (!tracked) return null;
+    const candidates = visibleCategories.size > 0
+      ? [...categoryIndex.entries()].flatMap(([cid, locs]) => visibleCategories.has(cid) ? locs : [])
+      : [...categoryIndex.values()].flat();
+    const uncompleted = candidates.filter((l) => !completedLocations.has(l.id));
+    const tx = tracked.x, ty = tracked.y;
+    let nearest: number | null = null;
+    let nearestDist = Infinity;
+    for (const loc of uncompleted) {
+      const p = latLngToPixel(loc.latitude, loc.longitude);
+      const d = Math.sqrt((p.x - tx) ** 2 + (p.y - ty) ** 2);
+      if (d < nearestDist && d > 2) { nearest = loc.id; nearestDist = d; }
+    }
+    return nearest;
+  }, [tracked, categoryIndex, visibleCategories, completedLocations]);
 
   /** 全部可见分类的标点 */
   const filtered = useMemo(() => {
@@ -269,11 +343,14 @@ export default function MapMarkers() {
   return (
     <>
       <MapEventListener />
+      <PlayerMarker />
       {toRender.map((loc) => (
         <LocationMarker
           key={loc.id}
           loc={loc}
           iconUrl={getIconUrl(loc.category_id)}
+          completed={completedLocations.has(loc.id)}
+          isTarget={loc.id === targetId}
         />
       ))}
     </>

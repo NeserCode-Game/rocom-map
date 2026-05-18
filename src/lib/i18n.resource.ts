@@ -21,6 +21,7 @@ export const I18nTexts = {
     "Command.turnto": "Turn to",
     "Command.turnto.home": "Home",
     "Command.turnto.settings": "Settings",
+    "Command.turnto.navigator": "Navigator",
 
     "Home.title": "Home",
 
@@ -75,6 +76,7 @@ export const I18nTexts = {
     "Command.turnto": "转到",
     "Command.turnto.home": "首页",
     "Command.turnto.settings": "设置",
+    "Command.turnto.navigator": "导航",
 
     "Home.title": "首页",
 

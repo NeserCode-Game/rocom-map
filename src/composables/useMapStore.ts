@@ -4,6 +4,14 @@ import { MARKER_GROUPS, getCategoryIconUrl, CACHE_TTL } from '../lib/map/constan
 import { cacheFetch } from '../lib/cache';
 import { logger } from '../lib/logger';
 
+/** SIFT 跟踪得到的玩家位置（大地图像素坐标） */
+export interface TrackedPosition {
+  x: number;
+  y: number;
+  confidence: number;
+  timestamp: number;
+}
+
 /** 视口边界 */
 export interface ViewportBounds {
   minLat: number;
@@ -57,6 +65,22 @@ interface MapState {
   expandAllGroups: () => void;
   /** 折叠所有分组 */
   collapseAllGroups: () => void;
+  /** 玩家追踪位置 */
+  trackedPosition: TrackedPosition | null;
+  setTrackedPosition: (pos: TrackedPosition | null) => void;
+  /** 已完成标点 ID 集合（持久化在 ConfigPanel 存档系统里） */
+  completedLocations: Set<number>;
+  toggleCompleted: (id: number) => void;
+  loadCompleted: (ids: number[]) => void;
+  /** 截取配置 */
+  captureHwnd: number;
+  captureRx: number;
+  captureRy: number;
+  captureRw: number;
+  captureRh: number;
+  captureWindowLeft: number;
+  captureWindowTop: number;
+  setCaptureConfig: (opts: { hwnd?: number; rx?: number; ry?: number; rw?: number; rh?: number; windowLeft?: number; windowTop?: number }) => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -70,6 +94,15 @@ export const useMapStore = create<MapState>((set, get) => ({
   iconUrlMap: new Map(),
   viewportBounds: null,
   collapsedGroups: new Set(),
+  trackedPosition: null,
+  completedLocations: new Set(),
+  captureHwnd: 0,
+  captureRx: 1438,
+  captureRy: 63,
+  captureRw: 150,
+  captureRh: 150,
+  captureWindowLeft: 0,
+  captureWindowTop: 0,
 
   setLocations: (locs) => {
     logger.info("store", "setLocations", "entry", { locCount: locs.length });
@@ -105,7 +138,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       };
     }).filter((g) => g.count > 0);
 
-    set({ locations: locs, groups, categoryIndex, visibleCategories: new Set() });
+    set({ locations: locs, groups, categoryIndex });
   },
 
   clearIconUrlMap: () => {
@@ -240,4 +273,23 @@ export const useMapStore = create<MapState>((set, get) => ({
     const allKeys = new Set(get().groups.map((g) => g.key));
     set({ collapsedGroups: allKeys });
   },
+
+  setTrackedPosition: (pos) => set({ trackedPosition: pos }),
+
+  toggleCompleted: (id) => set((s) => {
+    const next = new Set(s.completedLocations);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return { completedLocations: next };
+  }),
+  loadCompleted: (ids) => set({ completedLocations: new Set(ids) }),
+
+  setCaptureConfig: (opts) => set((s) => ({
+    captureHwnd: opts.hwnd ?? s.captureHwnd,
+    captureRx: opts.rx ?? s.captureRx,
+    captureRy: opts.ry ?? s.captureRy,
+    captureRw: opts.rw ?? s.captureRw,
+    captureRh: opts.rh ?? s.captureRh,
+    captureWindowLeft: opts.windowLeft ?? s.captureWindowLeft,
+    captureWindowTop: opts.windowTop ?? s.captureWindowTop,
+  })),
 }));

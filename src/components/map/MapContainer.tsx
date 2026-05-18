@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer as LeafletMapContainer } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { MapContainer as LeafletMapContainer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import { MAP_CONFIG, GAME_BOUNDS } from "../../lib/map/constants";
 import type { MapLocation } from "../../lib/map/types";
 import { fetchLocations } from "../../lib/map/api";
 import { useMapStore } from "../../composables/useMapStore";
+import { pixelToLatLng } from "../../lib/map/coords";
 import { logger } from "../../lib/logger";
 
 import GameTileLayer from "./GameTileLayer";
@@ -42,6 +43,31 @@ function restoreProfile(locations: MapLocation[]) {
   return allCids;
 }
 
+/** 玩家定位按钮 — 左下角，点击聚焦追踪点 */
+function LocateButton() {
+  const map = useMap();
+  const tracked = useMapStore((s) => s.trackedPosition);
+  const [active, setActive] = useState(false);
+
+  const fly = useCallback(() => {
+    if (!tracked) return;
+    const pos = pixelToLatLng(tracked.x, tracked.y);
+    map.flyTo(pos, MAP_CONFIG.zoom.max, { duration: 0.6 });
+    setActive(true);
+    setTimeout(() => setActive(false), 1200);
+  }, [map, tracked]);
+
+  if (!tracked) return null;
+
+  return (
+    <div className="map-locate">
+      <button className={`map-locate-btn ${active ? "map-locate-btn--active" : ""}`} onClick={fly} title="定位到玩家">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+      </button>
+    </div>
+  );
+}
+
 /** 数据加载器 */
 function DataLoader() {
   const setLocations = useMapStore((s) => s.setLocations);
@@ -56,8 +82,12 @@ function DataLoader() {
         const locs = await fetchLocations();
         if (!cancelled) {
           setLocations(locs);
-          const restored = restoreProfile(locs);
-          useMapStore.setState({ visibleCategories: restored, loading: false, overlay: { kind: 'idle' } });
+          // 只在没有档案恢复时才全选
+          if (useMapStore.getState().visibleCategories.size === 0) {
+            const restored = restoreProfile(locs);
+            useMapStore.setState({ visibleCategories: restored });
+          }
+          useMapStore.setState({ loading: false, overlay: { kind: 'idle' } });
           logger.info("MapContainer", "DataLoader", "fetch", { count: locs.length, success: true });
 
           // 提取所有分类 ID，异步预下载图标到本地缓存
@@ -149,6 +179,7 @@ export default function MapContainer() {
       >
         <GameTileLayer />
         <MapMarkers />
+        <LocateButton />
         <DataLoader />
       </LeafletMapContainer>
       <MapOverlay />

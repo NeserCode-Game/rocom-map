@@ -41,6 +41,10 @@
     "dialog:allow-open",
     "fs:default",
     "fs:allow-read",
-    "fs:allow-write"
+    "fs:write-files",
+    "fs:write-all",
+    "core:event:default",
+    "core:path:default",
+    "core:path:allow-resolve-directory"
   ]
 }

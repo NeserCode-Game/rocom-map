@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Home, Settings, RefreshCcw } from "lucide-react";
+import { Home, Settings, Crosshair, RefreshCcw } from "lucide-react";
 
 import {
   CommandDialog,
@@ -85,6 +85,15 @@ export default function CommandMenu() {
               <Settings />
               <span>{t("Command.turnto.settings")}</span>
               <CommandShortcut>⌘S</CommandShortcut>
+            </CommandItem>
+            <CommandItem
+              value="navigate::/navigator"
+              onSelect={handleCommandSelect}
+              keywords={["navigator", "navigate", "导航", "定位", "小地图"]}
+            >
+              <Crosshair />
+              <span>{t("Command.turnto.navigator")}</span>
+              <CommandShortcut>⌘N</CommandShortcut>
             </CommandItem>
           </CommandGroup>
         </CommandList>

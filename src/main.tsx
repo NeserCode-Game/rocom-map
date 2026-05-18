@@ -6,10 +6,12 @@ import { BrowserRouter } from "react-router";
 import { WindowUtils } from "@/lib/window.utils";
 import { nextTick } from "./composables";
 
-const $windowMain = new WindowUtils("main");
-nextTick(() => {
-  $windowMain.renderFocus();
-});
+if (window.location.pathname !== "/selector" && window.location.pathname !== "/nav-island") {
+  const $windowMain = new WindowUtils("main");
+  nextTick(() => {
+    $windowMain.renderFocus();
+  });
+}
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

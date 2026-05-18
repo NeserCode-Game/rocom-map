@@ -7,6 +7,9 @@ import { Routes, Route } from "react-router";
 
 import Home from "@/views/Home";
 import Settings from "@/views/Settings";
+import Navigator from "@/views/Navigator";
+import Selector from "@/views/Selector";
+import NavIsland from "@/views/NavIsland";
 
 import { useNavigate } from "react-router";
 import { useTheme, I18nContext, useI18nLogic, nextTick } from "@/composables";
@@ -52,7 +55,12 @@ function App() {
     defaultValue: t("Titlebar.default.title"),
   });
 
+  const isSelector = window.location.pathname === "/selector";
+  const isNavIsland = window.location.pathname === "/nav-island";
+  const isTray = window.location.pathname === "/tray";
+
   useAsyncEffect(async () => {
+    if (isSelector || isTray || isNavIsland) return;
     /* App Tray */
     const $tray = new AppTray({
       tooltip: t("Tray.tooltip.default"),
@@ -68,6 +76,19 @@ function App() {
 
     window.addEventListener("unload", handleBeforeUnload);
   }, []);
+
+  // 选区窗：最小渲染，不要标题栏/命令面板等
+  if (isSelector) {
+    return <Selector />;
+  }
+  if (isNavIsland) {
+    return <NavIsland />;
+  }
+
+  if (isTray) {
+    return null;
+  }
+
   return (
     <>
       <I18nContext.Provider value={{ lang, t, setLang: setLanguage }}>
@@ -83,6 +104,9 @@ function App() {
                     <Routes>
                       <Route path="/" index element={<Home />} />
                       <Route path="/settings" element={<Settings />} />
+                      <Route path="/navigator" element={<Navigator />} />
+                      <Route path="/selector" element={<Selector />} />
+                      <Route path="/nav-island" element={<NavIsland />} />
                     </Routes>
                   </ScrollArea>
                 </div>

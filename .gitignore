@@ -9,6 +9,14 @@ lerna-debug.log*
 
 node_modules
 dist
+
+# 游戏大地图（可通过 download_map.py 重新生成）
+big_map*.png
+big_map_features.pkl
+
+# Python 缓存
+tiles_z*/
+__pycache__
 dist-ssr
 *.local
 

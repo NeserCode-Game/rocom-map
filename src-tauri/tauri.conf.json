@@ -35,6 +35,38 @@
         "resizable": false,
         "width": 200,
         "height": 200
+      },
+      {
+        "label": "selector",
+        "url": "/selector",
+        "title": "小地图选区",
+        "skipTaskbar": true,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "visible": false,
+        "focus": true,
+        "width": 170,
+        "height": 170,
+        "x": 1718,
+        "y": 43
+      },
+      {
+        "label": "nav-island",
+        "url": "/nav-island",
+        "title": "导航",
+        "skipTaskbar": true,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "visible": false,
+        "focus": false,
+        "width": 280,
+        "height": 56,
+        "x": 100,
+        "y": 100
       }
     ],
     "security": {

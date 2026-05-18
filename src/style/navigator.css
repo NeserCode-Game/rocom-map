@@ -1,0 +1,50 @@
+/* ─── 导航调试面板 ─── */
+
+.dp-root { @apply w-full shrink-0 border-l bg-background flex flex-col overflow-y-auto overflow-x-hidden; }
+.dp-section { @apply flex flex-col shrink-0 overflow-x-hidden; }
+.dp-col { @apply flex flex-col shrink-0 min-w-0; }
+.dp-col--grow { @apply flex-1 min-h-0 overflow-hidden min-w-0; }
+.dp-head { @apply flex items-center justify-between py-2 px-3; }
+.dp-label { @apply text-xs font-medium text-muted-foreground flex items-center gap-1.5; }
+.dp-label-icon { @apply size-3.5 shrink-0; }
+.dp-error { @apply text-xs text-destructive bg-destructive/10 px-2 py-1 mx-3 rounded mb-1 flex items-center; }
+.dp-empty { @apply text-xs text-muted-foreground; }
+.dp-sep { @apply mx-3; }
+.dp-badge { @apply text-[10px] h-5 px-1.5 shrink-0; }
+
+/* Select */
+.dp-select-row { @apply flex items-center gap-2 px-3 pb-2; }
+.dp-select { @apply flex-1 h-8 text-xs; }
+.dp-select-sz { @apply text-[10px] text-muted-foreground ml-1; }
+
+/* 截图横排 */
+.dp-capture-row { @apply flex flex-row gap-2 flex-1 min-h-0 px-2 min-w-0; }
+.dp-body { @apply px-3 pb-3 pt-0 flex flex-col min-w-0 overflow-hidden; }
+.dp-body--center { @apply items-center justify-center flex-1; }
+.dp-preview { @apply object-contain rounded border max-w-full; }
+.dp-preview--mini { @apply max-h-36; }
+.dp-fields { @apply flex gap-1.5 flex-wrap; }
+.dp-field { @apply flex items-center gap-0.5 text-[10px] text-muted-foreground; }
+.dp-field-label { @apply text-[10px] text-muted-foreground; }
+.dp-input { @apply w-12 h-6 px-1 rounded border border-input bg-transparent text-[10px] outline-none focus-visible:ring-1 focus-visible:ring-ring; }
+.dp-result { @apply flex flex-wrap gap-x-4 gap-y-1; }
+.dp-result-item { @apply flex items-center gap-1.5; }
+.dp-result-label { @apply text-[10px] text-muted-foreground; }
+.dp-result-val { @apply text-xs font-medium font-mono; }
+
+.dp-compare { @apply flex gap-2 mt-2; }
+.dp-compare-col { @apply flex flex-col items-center gap-1 flex-1 min-w-0; }
+.dp-compare-label { @apply text-[10px] text-muted-foreground; }
+.dp-compare-img { @apply w-full rounded border object-contain; image-rendering: pixelated; max-height: 120px; }
+
+.dp-recolor { @apply flex flex-col gap-1.5 mt-2 px-1 pb-1; }
+.dp-recolor-head { @apply flex items-center gap-1 text-[10px] text-muted-foreground; }
+
+/* 工具栏按钮 */
+.dp-toolbar-btn-icon-sm { @apply size-3.5; }
+.dp-toolbar-btn-sm-icon { @apply size-3.5; }
+.dp-btn { @apply size-7; }
+.dp-btn-sm { @apply size-5; }
+.dp-btn-icon-sm { @apply size-3; }
+.dp-btn-icon-xs { @apply size-3.5; }
+.dp-btn-retry { @apply ml-2 h-6 text-xs; }

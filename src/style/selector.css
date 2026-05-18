@@ -1,0 +1,36 @@
+/* ─── 小地图选区透明覆盖窗 ─── */
+
+html.selector-window,
+html.selector-window body,
+html.selector-window #root {
+  @apply m-0 p-0 w-screen h-screen overflow-hidden bg-transparent;
+}
+
+.selector-root {
+  @apply w-screen h-screen flex items-center justify-center flex-col
+    cursor-move select-none overflow-hidden relative rounded-full;
+  background: rgb(0 255 0 / 0.12);
+  border: 2px solid rgb(0 255 0 / 0.5);
+}
+
+.selector-crosshair-x {
+  @apply absolute top-1/2 left-[20%] w-[60%] h-px pointer-events-none;
+  background: rgb(0 255 0 / 0.35);
+}
+
+.selector-crosshair-y {
+  @apply absolute left-1/2 top-[20%] w-px h-[60%] pointer-events-none;
+  background: rgb(0 255 0 / 0.35);
+}
+
+.selector-size {
+  @apply absolute bottom-[30%] text-xs font-bold pointer-events-none;
+  color: rgb(0 255 0 / 0.7);
+  text-shadow: 0 0 4px rgb(0 0 0 / 0.6);
+}
+
+.selector-hint {
+  @apply absolute bottom-[18%] text-[9px] pointer-events-none text-center whitespace-nowrap;
+  color: rgb(255 255 255 / 0.55);
+  text-shadow: 0 0 4px rgb(0 0 0 / 0.6);
+}
