@@ -53,7 +53,7 @@ export function useTracker(hwnd: number, rx: number, ry: number, rw: number, rh:
 
   const startAuto = useCallback((fn: () => void) => {
     fn();
-    autoTimer.current = setInterval(fn, 1000);
+    autoTimer.current = setInterval(fn, 500);
   }, []);
 
   const stopAuto = useCallback(() => {

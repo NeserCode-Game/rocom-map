@@ -7,8 +7,12 @@ html.navisland-window #root {
 }
 
 .navisland-root {
-  @apply w-full h-full flex border border-white/10 cursor-move select-none backdrop-blur-xl;
+  @apply w-full h-full flex flex-col border border-white/10 cursor-move select-none backdrop-blur-xl;
   background: rgb(0 0 0 / 0.55);
+}
+
+.navisland-main {
+  @apply flex flex-1 min-h-0;
 }
 
 .navisland-left {
@@ -54,6 +58,10 @@ html.navisland-window #root {
 .navisland-target-dot {
   @apply absolute w-2 h-2 rounded-full bg-white ring-1 ring-sky-500/60;
   transform: translate(-50%, -50%);
+}
+
+.navisland-hotkeys {
+  @apply text-[9px] text-white/25 text-center mt-0.5;
 }
 
 .navisland-ref-img {

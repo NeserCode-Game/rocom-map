@@ -10,12 +10,25 @@ from kornia.feature import LoFTR
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+try:
+    import torch_directml
+    _dml = torch_directml.device()
+    _HAS_DML = True
+except Exception:
+    _HAS_DML = False
 
-# ── LoFTR 引擎 ──
+
+def _get_device():
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if _HAS_DML:
+        return _dml
+    return torch.device("cpu")
+
 
 class LoftrEngine:
     def __init__(self):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = _get_device()
         print(f"[LoFTR] device={self.device}", file=sys.stderr, flush=True)
         self.matcher = LoFTR(pretrained="outdoor").to(self.device)
         self.matcher.eval()
@@ -38,21 +51,20 @@ class LoftrEngine:
 class SIFTMatcher:
     CLAHE_CLIP = 3.0
     MATCH_RATIO = 0.9
-    MIN_MATCHES = 3      # 全局扫描最少匹配点数
+    MIN_MATCHES = 5
     RANSAC_THRESH = 8.0
     CACHE_FILE = "big_map_features.pkl"
 
-    # LoFTR 参数 (对齐参考项目)
-    LOFTR_CONF = 0.55
-    LOFTR_MIN_MATCH = 9
+    LOFTR_CONF = 0.6
+    LOFTR_MIN_MATCH = 6
     LOFTR_RANSAC = 8.0
 
-    TRACK_RADIUS = 100
+    TRACK_RADIUS = 500
     MAX_LOST_FRAMES = 5
-    MAX_LOW_CONF_FRAMES = 5    # 连续低质量帧后重新全局
-    LOW_CONF_THRESH = 0.3
-    SMOOTH_ALPHA = 0.25
-    OUTLIER_THRESH = 250
+    SMOOTH_ALPHA_STILL = 0.08
+    SMOOTH_ALPHA_MOVE = 0.40
+    MOVE_THRESH = 50
+    OUTLIER_THRESH = 500
 
     def __init__(self):
         self.big_map = None
@@ -72,7 +84,8 @@ class SIFTMatcher:
 
         self.last_x = self.last_y = None
         self.lost_frames = 0
-        self.low_conf_frames = 0  # 低置信度连续计数
+        self.low_conf_frames = 0
+        self.track_radius = self.TRACK_RADIUS
         self.smoothed_x = self.smoothed_y = None
 
     # ── 初始化 ──
@@ -167,10 +180,10 @@ class SIFTMatcher:
     # ── LoFTR 局部追踪 ──
 
     def _loftr_track(self, mini_bgr):
-        x1 = max(0, int(self.smoothed_x or self.last_x) - self.TRACK_RADIUS)
-        y1 = max(0, int(self.smoothed_y or self.last_y) - self.TRACK_RADIUS)
-        x2 = min(self.map_w, int(self.smoothed_x or self.last_x) + self.TRACK_RADIUS)
-        y2 = min(self.map_h, int(self.smoothed_y or self.last_y) + self.TRACK_RADIUS)
+        x1 = max(0, int(self.smoothed_x or self.last_x) - self.track_radius)
+        y1 = max(0, int(self.smoothed_y or self.last_y) - self.track_radius)
+        x2 = min(self.map_w, int(self.smoothed_x or self.last_x) + self.track_radius)
+        y2 = min(self.map_h, int(self.smoothed_y or self.last_y) + self.track_radius)
 
         local = self.big_map[y1:y2, x1:x2]
         if local.shape[0] < 16 or local.shape[1] < 16:
@@ -221,100 +234,76 @@ class SIFTMatcher:
             state = "global"
             if r is not None:
                 cx, cy, num_match, num_inlier = r
+                found = True
                 self.lost_frames = 0
+                self.track_radius = self.TRACK_RADIUS
                 self.state = "LOCAL_TRACK"
-                self.lost_frames = 0
             else:
                 self.lost_frames += 1
                 return {"status": "ok", "type": "match", "x": -1, "y": -1, "confidence": 0.0,
                         "matches": num_match, "inliers": num_inlier, "mode": state,
                         "message": "sift global failed"}
         else:
-            # SIFT 局部追踪
-            x1 = max(0, int(self.smoothed_x or self.last_x) - self.TRACK_RADIUS)
-            y1 = max(0, int(self.smoothed_y or self.last_y) - self.TRACK_RADIUS)
-            x2 = min(self.map_w, int(self.smoothed_x or self.last_x) + self.TRACK_RADIUS)
-            y2 = min(self.map_h, int(self.smoothed_y or self.last_y) + self.TRACK_RADIUS)
+            # LoFTR 局部追踪（DML GPU）
+            r = self._loftr_track(minimap)
             state = "track"
-            local = self.big_map[y1:y2, x1:x2]
-            if local.shape[0] < 16 or local.shape[1] < 16:
-                found = False; num_match = num_inlier = 0
-            else:
-                local_gray = self._preprocess(local)
-                local_kp, local_des = self.sift.detectAndCompute(local_gray, None)
-                if local_des is None or len(local_kp) < self.MIN_MATCHES:
-                    found = False; num_match = num_inlier = 0
-                else:
-                    local_des = local_des.astype(np.float32)
-                    r = self._match_features(mini_gray, mh, mw, local_kp, local_des, x1, y1, "track")
-                    if r is not None:
-                        cx, cy, num_match, num_inlier = r; found = True
+            if r is not None:
+                rx, ry, n = r
+                if 0 <= rx < self.map_w and 0 <= ry < self.map_h:
+                    if self.smoothed_x is None:
+                        self.smoothed_x, self.smoothed_y = float(rx), float(ry)
                     else:
-                        num_match = num_inlier = 0; found = False
+                        d = np.sqrt((rx - self.smoothed_x) ** 2 + (ry - self.smoothed_y) ** 2)
+                        if d < self.OUTLIER_THRESH:
+                            a = self.SMOOTH_ALPHA_STILL if d < self.MOVE_THRESH else self.SMOOTH_ALPHA_MOVE
+                            self.smoothed_x = a * rx + (1 - a) * self.smoothed_x
+                            self.smoothed_y = a * ry + (1 - a) * self.smoothed_y
+                            found = True
+                    if found:
+                        self.last_x, self.last_y = int(self.smoothed_x), int(self.smoothed_y)
+                        self.lost_frames = 0
+                        self.track_radius = self.TRACK_RADIUS
+            else:
+                self.lost_frames += 1
+                if self.lost_frames == 1:
+                    self.track_radius += 300
 
             if not found:
-                self.lost_frames += 1
                 if self.lost_frames >= self.MAX_LOST_FRAMES:
-                    self.state = "GLOBAL_SCAN"
                     print(f"[track] lost → GLOBAL", file=sys.stderr, flush=True)
+                    self.state = "GLOBAL_SCAN"
+                    self.lost_frames = 0
+                    self.smoothed_x = self.smoothed_y = None
                 return {"status": "ok", "type": "match", "x": -1, "y": -1, "confidence": 0.0,
-                        "matches": num_match, "inliers": num_inlier, "mode": state}
+                        "matches": 0, "inliers": 0, "mode": state}
 
-        # ── 坐标验证 ──
-        if not (0 <= cx < self.map_w and 0 <= cy < self.map_h):
-            self.lost_frames += 1
-            return {"status": "ok", "type": "match", "x": cx, "y": cy, "confidence": 0.0,
-                    "matches": num_match, "inliers": num_inlier, "mode": state,
-                    "message": "out of bounds"}
+        if not found:
+            return {"status": "ok", "type": "match", "x": -1, "y": -1, "confidence": 0.0,
+                    "matches": num_match if 'num_match' in dir() else 0,
+                    "inliers": num_inlier if 'num_inlier' in dir() else 0,
+                    "mode": state}
 
-        # ── 平滑 ──
-        if self.smoothed_x is None:
-            self.smoothed_x = float(cx)
-            self.smoothed_y = float(cy)
-        else:
-            dist = np.sqrt((cx - self.smoothed_x) ** 2 + (cy - self.smoothed_y) ** 2)
-            if dist < self.OUTLIER_THRESH:
-                self.smoothed_x = self.SMOOTH_ALPHA * cx + (1 - self.SMOOTH_ALPHA) * self.smoothed_x
-                self.smoothed_y = self.SMOOTH_ALPHA * cy + (1 - self.SMOOTH_ALPHA) * self.smoothed_y
+        # global 模式统一平滑；track 模式 LoFTR 内部已处理
+        if state == "global":
+            if self.smoothed_x is None:
+                self.smoothed_x = float(cx)
+                self.smoothed_y = float(cy)
             else:
-                # 异常跳跃：跟踪模式下计数
-                if state == "track":
-                    self.low_conf_frames += 1
-                    if self.low_conf_frames >= self.MAX_LOW_CONF_FRAMES:
-                        self.state = "GLOBAL_SCAN"
-                        self.lost_frames = 0
-                        self.low_conf_frames = 0
-                        print(f"[track] outlier × {self.MAX_LOW_CONF_FRAMES} → GLOBAL_SCAN", file=sys.stderr, flush=True)
-                        return {"status": "ok", "type": "match", "x": -1, "y": -1, "confidence": 0.0,
-                                "matches": num_match, "inliers": num_inlier, "mode": state,
-                                "message": "auto re-global (outlier)"}
+                dist = np.sqrt((cx - self.smoothed_x) ** 2 + (cy - self.smoothed_y) ** 2)
+                if dist < self.OUTLIER_THRESH:
+                    a = self.SMOOTH_ALPHA_STILL if dist < self.MOVE_THRESH else self.SMOOTH_ALPHA_MOVE
+                    self.smoothed_x = a * cx + (1 - a) * self.smoothed_x
+                    self.smoothed_y = a * cy + (1 - a) * self.smoothed_y
+            self.last_x = int(self.smoothed_x)
+            self.last_y = int(self.smoothed_y)
 
-        self.last_x = int(self.smoothed_x)
-        self.last_y = int(self.smoothed_y)
-
-        conf = round(num_inlier / max(num_match, 1), 4) if num_match > 0 else 0.99
-
-        # 全局模式：低置信度累计后可触发重新全局定位
-        if state == "global" and conf < self.LOW_CONF_THRESH:
-            self.low_conf_frames += 1
-            if self.low_conf_frames >= self.MAX_LOW_CONF_FRAMES:
-                self.state = "GLOBAL_SCAN"
-                self.smoothed_x = self.smoothed_y = None
-                self.last_x = self.last_y = None
-                self.lost_frames = 0
-                self.low_conf_frames = 0
-                print(f"[global] low confidence {conf} × {self.MAX_LOW_CONF_FRAMES} → re-global", file=sys.stderr, flush=True)
-        else:
-            self.low_conf_frames = 0
-
-        ref_b64 = self._crop_big_map(self.last_x, self.last_y, 50)
-
+        ref = self._crop_big_map(self.last_x, self.last_y, 50)
         return {"status": "ok", "type": "match",
                 "x": self.last_x, "y": self.last_y,
-                "confidence": conf,
+                "confidence": round(num_inlier / max(num_match, 1), 4) if num_match > 0 else 0.99,
                 "matches": num_match, "inliers": num_inlier,
                 "mode": state,
-                "reference_png_b64": ref_b64}
+                "reference_png_b64": ref}
 
     def _crop_big_map(self, cx, cy, half):
         x1 = max(0, cx - half)

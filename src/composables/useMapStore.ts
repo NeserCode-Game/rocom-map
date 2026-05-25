@@ -96,6 +96,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   collapsedGroups: new Set(),
   trackedPosition: null,
   completedLocations: new Set(),
+  lastTargetId: null,
+  _prevUndo: null as number | null,
   captureHwnd: 0,
   captureRx: 1438,
   captureRy: 63,

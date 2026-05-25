@@ -36,30 +36,33 @@ export default function NavIsland() {
 
   return (
     <div className="navisland-root">
-      <div className="navisland-left">
-        <div className="navisland-arrow" style={{ transform: `rotate(${angle}deg)` }}>
-          <svg width="20" height="20" viewBox="0 0 20 20">
-            <polygon points="10,0 6,12 10,10 14,12" className="fill-emerald-400/90" />
-          </svg>
+      <div className="navisland-main">
+        <div className="navisland-left">
+          <div className="navisland-arrow" style={{ transform: `rotate(${angle}deg)` }}>
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <polygon points="10,0 6,12 10,10 14,12" className="fill-emerald-400/90" />
+            </svg>
+          </div>
+          <div className="navisland-info">
+            {title ? (
+              <>
+                <span className="navisland-distance">{dist}m</span>
+                <span className="navisland-name">{title}</span>
+              </>
+            ) : (
+              <span className="navisland-empty">—</span>
+            )}
+          </div>
         </div>
-        <div className="navisland-info">
-          {title ? (
-            <>
-              <span className="navisland-distance">{dist}m</span>
-              <span className="navisland-name">{title}</span>
-            </>
-          ) : (
-            <span className="navisland-empty">—</span>
-          )}
-        </div>
+        {refB64 && (
+          <div className="navisland-ref-wrap">
+            <img className="navisland-ref-img" src={`data:image/png;base64,${refB64}`} alt="" />
+            <div className="navisland-player-dot" />
+            <div className="navisland-target-dot" style={{ left: `${dotX}%`, top: `${dotY}%` }} />
+          </div>
+        )}
       </div>
-      {refB64 && (
-        <div className="navisland-ref-wrap">
-          <img className="navisland-ref-img" src={`data:image/png;base64,${refB64}`} alt="" />
-          <div className="navisland-player-dot" />
-          <div className="navisland-target-dot" style={{ left: `${dotX}%`, top: `${dotY}%` }} />
-        </div>
-      )}
+      <div className="navisland-hotkeys">F9 标记完成 · F10 撤销</div>
     </div>
   );
 }

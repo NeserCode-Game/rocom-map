@@ -10,6 +10,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { emit } from "@tauri-apps/api/event";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { useHotkeys, setHotkeyTarget } from "@/composables/useHotkeys";
 import { useTracker } from "@/composables/useTracker";
 import { ConfigPanel } from "./ConfigPanel";
 import { latLngToPixel } from "@/lib/map/coords";
@@ -39,6 +40,9 @@ export default function LeftPanel() {
   const rh = useMapStore((s) => s.captureRh);
 
   const { captureAndMatch, startAuto, stopAuto } = useTracker(hwnd, rx, ry, rw, rh);
+
+  // F9 标记/F10 撤销（注册在 useHotkeys 初始化时）
+  useHotkeys();
 
   function toggle(t: Tab) { setOpen(open === t ? null : t); }
 
@@ -103,16 +107,17 @@ export default function LeftPanel() {
       ? locs.filter((l) => visibleCats.has(l.category_id) && !completed.has(l.id))
       : locs.filter((l) => !completed.has(l.id));
 
-    let nearest: { title: string; x: number; y: number } | null = null;
+    let nearest: { id: number; title: string; x: number; y: number } | null = null;
     let nearestDist = Infinity;
     for (const loc of candidates) {
       const p = latLngToPixel(loc.latitude, loc.longitude);
       const dx = p.x - tx, dy = p.y - ty;
       const d = Math.sqrt(dx*dx + dy*dy);
-      if (d < nearestDist && d > 2) { nearest = { title: loc.title, x: p.x, y: p.y }; nearestDist = d; }
+      if (d < nearestDist && d > 2) { nearest = { id: loc.id, title: loc.title, x: p.x, y: p.y }; nearestDist = d; }
     }
 
     if (nearest) {
+      setHotkeyTarget(nearest.id);
       const rad = Math.atan2(nearest.y - ty, nearest.x - tx);
       const angle = Math.round(((rad * 180) / Math.PI + 360 + 90) % 360);
       const dist = Math.round((nearestDist / 4096) * 1400);

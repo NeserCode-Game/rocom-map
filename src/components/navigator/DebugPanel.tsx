@@ -62,7 +62,7 @@ export default function DebugPanel() {
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   }, [hwnd, rx, ry, rw, rh, windows]);
 
-  useEffect(() => { if (!autoCapture) { if (autoTimer.current) { clearInterval(autoTimer.current); autoTimer.current = null; } return; }     captureAndMatch(); autoTimer.current = setInterval(captureAndMatch, 1000); return () => { if (autoTimer.current) { clearInterval(autoTimer.current); autoTimer.current = null; } }; }, [autoCapture, captureAndMatch]);
+  useEffect(() => { if (!autoCapture) { if (autoTimer.current) { clearInterval(autoTimer.current); autoTimer.current = null; } return; }     captureAndMatch(); autoTimer.current = setInterval(captureAndMatch, 500); return () => { if (autoTimer.current) { clearInterval(autoTimer.current); autoTimer.current = null; } }; }, [autoCapture, captureAndMatch]);
 
   const onRegionChange = useCallback((field: string, value: number) => { const next = { rx, ry, rw, rh, [field]: value }; setRx(next.rx); setRy(next.ry); setRw(next.rw); setRh(next.rh); saveCaptureRegion(next.rx, next.ry, next.rw, next.rh); }, [rx, ry, rw, rh]);
 
